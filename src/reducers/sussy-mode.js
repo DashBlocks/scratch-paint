@@ -5,7 +5,6 @@ const initialState = { shape: "smile" };
 
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
-    let { shape } = state;
     switch (action.type) {
         case CHANGE_SUSSY_CURRENTLY_SELECTED_SHAPE:
             if (typeof action.shape !== "string") {
@@ -19,7 +18,7 @@ const reducer = function (state, action) {
 };
 
 // Action creators ===================================
-const changeSussyShape = function (shape) {
+const changeCurrentlySelectedShape = function (shape) {
     return {
         type: CHANGE_SUSSY_CURRENTLY_SELECTED_SHAPE,
         shape: shape
@@ -28,5 +27,6 @@ const changeSussyShape = function (shape) {
 
 export {
     reducer as default,
-    changeSussyShape
+    changeCurrentlySelectedShape,
+    changeCurrentlySelectedShape as changeSussyShape
 };

@@ -5,7 +5,6 @@ const initialState = {roundedCornerSize: 0};
 
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
-    let { roundedCornerSize } = state;
     switch (action.type) {
         case CHANGE_ROUNDED_CORNER_SIZE:
             if (isNaN(action.roundedCornerSize)) {

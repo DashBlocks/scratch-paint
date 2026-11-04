@@ -1,6 +1,6 @@
-# TurboWarp/scratch-paint
+# DashBlocks/PenguinMod-Paint
 
-Modified version of scratch-paint for TurboWarp
+@PenguinMod-Paint modified for use in [Dash](https://dashblocks.github.io/) (@DashBlocks/PenguinMod-Paint)
 
 ## Building
 
@@ -17,7 +17,7 @@ For more information, see https://docs.turbowarp.org/development/getting-started
 
 ## License
 
-TurboWarp/scratch-paint is licensed under the GNU General Public License version 3.0. See LICENSE for more information.
+@TurboWarp/scratch-paint is licensed under the GNU General Public License version 3.0. See LICENSE for more information.
 
 The original scratch-paint that this is based on uses the following license:
 

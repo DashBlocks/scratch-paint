@@ -5,10 +5,8 @@ const initialState = {alignment: "left"};
 
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
-    let { alignment } = state;
     switch (action.type) {
         case SET_TEXT_ALIGNMENT:
-            // NOTE: justify alignment is not valid in paper.js
             if (!["left", "center", "right"].includes(action.alignment)) {
                 log.warn(`Invalid text alignment: ${action.alignment}`);
                 return state;

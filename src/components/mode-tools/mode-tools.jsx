@@ -1,49 +1,103 @@
+/* eslint-disable no-case-declarations, react/jsx-no-bind */
 import classNames from 'classnames';
 import {connect} from 'react-redux';
 import PropTypes from 'prop-types';
 import React from 'react';
 
-import {changeBrushSize, toggleBrushPressure} from '../../reducers/brush-mode';
-import {changeBrushSize as changeEraserSize} from '../../reducers/eraser-mode';
+import Dropdown from '../dropdown/dropdown.jsx';
+import MediaQuery from 'react-responsive';
+import layout from '../../lib/layout-constants';
+
+import {
+    changeBrushSize,
+    changeSimplifySize as changeBrushSimplifySize,
+    setBrushType,
+    toggleBrushPressure
+} from '../../reducers/brush-mode';
+import {
+    changeBrushSize as changeEraserSize,
+    changeSimplifySize as changeEraserSimplifySize
+} from '../../reducers/eraser-mode';
+import {changeSimplifySize as changeFreeformSimplifySize} from '../../reducers/freeform-mode';
+import {changeSimplifySize as changePenSimplifySize} from '../../reducers/pen-mode';
+import {changeRoundedRectCornerSize} from '../../reducers/rounded-rect-mode';
+import {changeRoundedCornerSize} from '../../reducers/rect-mode';
+import {changeTrianglePolyCount, changeTrianglePointCount} from '../../reducers/triangle-mode';
+import {changeCurrentlySelectedShape} from '../../reducers/sussy-mode';
 import {changeBitBrushSize} from '../../reducers/bit-brush-size';
 import {changeBitEraserSize} from '../../reducers/bit-eraser-size';
 import {setShapesFilled} from '../../reducers/fill-bitmap-shapes';
-import {changeSimplifySize} from '../../reducers/freeform-mode';
+import {setTextAlignment} from '../../reducers/text-alignment';
 
 import FontDropdown from '../../containers/font-dropdown.jsx';
+import DashArrayDropdown from '../../containers/dash-array-dropdown.jsx';
 import LiveInputHOC from '../forms/live-input-hoc.jsx';
 import Label from '../forms/label.jsx';
 import {defineMessages, injectIntl, intlShape} from 'react-intl';
 import Input from '../forms/input.jsx';
 import InputGroup from '../input-group/input-group.jsx';
+import ButtonGroup from '../button-group/button-group.jsx';
+import Button from '../button/button.jsx';
 import LabeledIconButton from '../labeled-icon-button/labeled-icon-button.jsx';
 import Modes from '../../lib/modes';
 import Formats, {isBitmap, isVector} from '../../lib/format';
 import {hideLabel} from '../../lib/hide-label';
 import styles from './mode-tools.css';
+import {MAX_STROKE_WIDTH} from '../../reducers/stroke-width';
+import {
+    selectableShapes as sussyToolShapes,
+    categories as sussyToolCategories,
+    generateShapeSVG as generateSussyShapeSVG,
+    categorizeShapes as categorizeSussyShapes
+} from '../../helper/selectable-shapes.js';
 
 import copyIcon from '!../../tw-recolor/build!./icons/copy.svg';
+import cutIcon from '!../../tw-recolor/build!./icons/cut.svg';
 import pasteIcon from '!../../tw-recolor/build!./icons/paste.svg';
 import deleteIcon from '!../../tw-recolor/build!./icons/delete.svg';
-
+import roundLine from '!../../tw-recolor/build!./icons/round-line.svg';
+import squareLine from '!../../tw-recolor/build!./icons/square-line.svg';
+import miterLineJoin from '!../../tw-recolor/build!./icons/miter-line-join.svg';
+import roundLineJoin from '!../../tw-recolor/build!./icons/round-line-join.svg';
+import bevelLineJoin from '!../../tw-recolor/build!./icons/bevel-line-join.svg';
+import shapeMergeIcon from '!../../tw-recolor/build!./icons/merge.svg';
+import shapeMaskIcon from '!../../tw-recolor/build!./icons/mask.svg';
+import shapeSubtractIcon from '!../../tw-recolor/build!./icons/subtract.svg';
+import shapeFilterIcon from '!../../tw-recolor/build!./icons/filter.svg';
+import alignLeftIcon from './icons/alignLeft.svg';
+import alignRightIcon from './icons/alignRight.svg';
+import alignCenterIcon from './icons/alignCenter.svg';
+import pressureIcon from '!../../tw-recolor/build!./icons/pressure.svg';
 import bitBrushIcon from '../bit-brush-mode/brush.svg';
 import bitEraserIcon from '../bit-eraser-mode/eraser.svg';
 import bitLineIcon from '../bit-line-mode/line.svg';
 import brushIcon from '../brush-mode/brush.svg';
 import curvedPointIcon from '!../../tw-recolor/build!./icons/curved-point.svg';
 import eraserIcon from '../eraser-mode/eraser.svg';
+import roundedRectIcon from '../rounded-rect-mode/rounded-rectangle.svg';
+import triangleIcon from '../triangle-mode/triangle.svg';
+import triangleSpikeRatioIcon from './icons/triangle-spike-ratio.svg';
 import flipHorizontalIcon from '!../../tw-recolor/build!./icons/flip-horizontal.svg';
 import flipVerticalIcon from '!../../tw-recolor/build!./icons/flip-vertical.svg';
-import pressureIcon from '!../../tw-recolor/build!./icons/pressure.svg';
+import centerSelectionIcon from '!../../tw-recolor/build!./icons/centerSelection.svg';
 import straightPointIcon from '!../../tw-recolor/build!./icons/straight-point.svg';
 import bitOvalIcon from '../bit-oval-mode/oval.svg';
 import bitRectIcon from '../bit-rect-mode/rectangle.svg';
 import bitOvalOutlinedIcon from '../bit-oval-mode/oval-outlined.svg';
 import bitRectOutlinedIcon from '../bit-rect-mode/rectangle-outlined.svg';
-
-import {MAX_STROKE_WIDTH} from '../../reducers/stroke-width';
+import text2PathIcon from '!../../tw-recolor/build!./icons/text-to-shapes.svg';
 
 const LiveInput = LiveInputHOC(Input);
+const brushCircleIcon = `data:image/svg+xml,${encodeURIComponent(
+    '<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">' +
+    '<circle cx="10" cy="10" r="7.5" fill="#00c3ff"/>' +
+    '</svg>'
+)}`;
+const brushSquareIcon = `data:image/svg+xml,${encodeURIComponent(
+    '<svg viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect x="2.5" y="2.5" width="15" height="15" rx="2" fill="#00c3ff"/>' +
+    '</svg>'
+)}`;
 const ModeToolsComponent = props => {
     const messages = defineMessages({
         brushSize: {
@@ -51,15 +105,60 @@ const ModeToolsComponent = props => {
             description: 'Label for the brush size input',
             id: 'paint.modeTools.brushSize'
         },
+        brushSimplify: {
+            defaultMessage: 'Smoothing',
+            description: 'Controls how much the brush line is smoothed',
+            id: 'dash.paint.modeTools.brushSimplify'
+        },
         eraserSize: {
             defaultMessage: 'Eraser size',
             description: 'Label for the eraser size input',
             id: 'paint.modeTools.eraserSize'
         },
+        eraserSimplify: {
+            defaultMessage: 'Smoothing',
+            description: 'Controls how much the eraser line is smoothed',
+            id: 'dash.paint.modeTools.eraserSimplify'
+        },
+        brushCircle: {
+            defaultMessage: 'Circle brush',
+            description: 'Label for the circle brush shape',
+            id: 'dash.paint.modeTools.brushCircle'
+        },
+        brushSquare: {
+            defaultMessage: 'Square brush',
+            description: 'Label for the square brush shape',
+            id: 'dash.paint.modeTools.brushSquare'
+        },
+        roundedCornerSize: {
+            defaultMessage: 'Rounded corner size',
+            description: 'Label for the Rounded corner size input',
+            id: 'dash.paint.modeTools.roundedCornerSize'
+        },
+        currentSideCount: {
+            defaultMessage: 'Polygon side count',
+            description: 'Label for the Polygon side count input',
+            id: 'dash.paint.modeTools.currentSideCount'
+        },
+        spokeRatio: {
+            defaultMessage: 'Star spoke ratio',
+            description: 'Controls the size of the star spokes',
+            id: 'dash.paint.modeTools.spikeRatio'
+        },
+        penSimplify: {
+            defaultMessage: 'Smoothing',
+            description: 'Controls how much the pen line is smoothed',
+            id: 'dash.paint.modeTools.penSimplify'
+        },
         copy: {
             defaultMessage: 'Copy',
             description: 'Label for the copy button',
             id: 'paint.modeTools.copy'
+        },
+        cut: {
+            defaultMessage: 'Cut',
+            description: 'Label for the cut button',
+            id: 'dash.paint.modeTools.cut'
         },
         paste: {
             defaultMessage: 'Paste',
@@ -116,6 +215,81 @@ const ModeToolsComponent = props => {
             description: 'Label for the button that makes brush strokes taper with drawing speed',
             id: 'paint.modeTools.pressure'
         },
+        movementCenter: {
+            defaultMessage: 'Center',
+            description: 'Label for the button that moves the selected objects to the center of the canvas',
+            id: 'dash.paint.modeTools.movementCenter'
+        },
+        joinSpiked: {
+            defaultMessage: 'Spiked',
+            description: 'Label for the button that sets the line join to miter',
+            id: 'dash.paint.modeTools.joinSpiked'
+        },
+        joinRounded: {
+            defaultMessage: 'Rounded',
+            description: 'Label for the button that sets the line join to round',
+            id: 'dash.paint.modeTools.joinRounded'
+        },
+        joinBeveled: {
+            defaultMessage: 'Beveled',
+            description: 'Label for the button that sets the line join to bevel',
+            id: 'dash.paint.modeTools.joinBeveled'
+        },
+        endRounded: {
+            defaultMessage: 'Rounded',
+            description: 'Label for the button that sets the line cap to round',
+            id: 'dash.paint.modeTools.endRounded'
+        },
+        endSquared: {
+            defaultMessage: 'Squared',
+            description: 'Label for the button that sets the line cap to square',
+            id: 'dash.paint.modeTools.endSquared'
+        },
+        merge: {
+            defaultMessage: 'Merge',
+            description: 'Label for the button that merges two selected objects together',
+            id: 'dash.paint.modeTools.merge'
+        },
+        subtract: {
+            defaultMessage: 'Subtract',
+            description: 'Label for the button that subtracts selected objects from eachother',
+            id: 'dash.paint.modeTools.subtract'
+        },
+        mask: {
+            defaultMessage: 'Mask',
+            description: 'Label for the button that ands two selected objects together',
+            id: 'dash.paint.modeTools.mask'
+        },
+        filter: {
+            defaultMessage: 'Filter',
+            description: 'Label for the button that xors two selected objects together',
+            id: 'dash.paint.modeTools.filter'
+        },
+        leftAlign: {
+            defaultMessage: 'Left align',
+            description: 'Label for the button that sets text alignment to the left',
+            id: 'dash.paint.modeTools.leftAlign'
+        },
+        rightAlign: {
+            defaultMessage: 'Right align',
+            description: 'Label for the button that sets text alignment to the right',
+            id: 'dash.paint.modeTools.rightAlign'
+        },
+        centerAlign: {
+            defaultMessage: 'Center align',
+            description: 'Label for the button that sets text alignment to the center',
+            id: 'dash.paint.modeTools.centerAlign'
+        },
+        text2Path: {
+            defaultMessage: 'Text to Shapes',
+            description: 'Label for the button that converts text to shapes',
+            id: 'dash.paint.modeTools.text2Path'
+        },
+        more: {
+            defaultMessage: 'More',
+            description: 'Label for dropdown to access more action buttons',
+            id: 'paint.paintEditor.more'
+        }
     });
 
     switch (props.mode) {
@@ -128,13 +302,17 @@ const ModeToolsComponent = props => {
         const currentIcon = isVector(props.format) ? brushIcon :
             props.mode === Modes.BIT_LINE ? bitLineIcon : bitBrushIcon;
         const currentBrushValue = isBitmap(props.format) ? props.bitBrushSize : props.brushValue;
+        const currentSimplifyValue = props.simplifyValue;
         const changeFunction = isBitmap(props.format) ? props.onBitBrushSliderChange : props.onBrushSliderChange;
+        const changeFunctionSimplify = props.onSimplifySliderChange;
         const currentMessage = props.mode === Modes.BIT_LINE ? messages.thickness : messages.brushSize;
+        const hasSimplifyOption = props.mode === Modes.BRUSH;
         return (
             <div className={classNames(props.className, styles.modeTools)}>
                 <div>
                     <img
                         alt={props.intl.formatMessage(currentMessage)}
+                        title={props.intl.formatMessage(currentMessage)}
                         className={styles.modeToolsIcon}
                         draggable={false}
                         src={currentIcon}
@@ -149,7 +327,60 @@ const ModeToolsComponent = props => {
                     value={currentBrushValue}
                     onSubmit={changeFunction}
                 />
-                {props.mode === Modes.BRUSH ?
+                        
+                {hasSimplifyOption && (
+                    <Label
+                        text={props.intl.formatMessage(messages.brushSimplify)}
+                        style={{marginLeft: 'calc(2 * .25rem)'}}
+                    >
+                        <LiveInput
+                            range
+                            small
+                            max={1000}
+                            min="0"
+                            type="number"
+                            value={currentSimplifyValue}
+                            onSubmit={changeFunctionSimplify}
+                        />
+                    </Label>
+                )}
+
+                {/* TODO replace this with a dropdown when we add more brush shapes */}
+                {hasSimplifyOption && (
+                    <InputGroup>
+                        <ButtonGroup>
+                            <Button
+                                className={
+                                    classNames(styles.buttonGroupButton)
+                                }
+                                disabled={props.brushType === 'CIRCLE'}
+                                onClick={props.onBrushCircle}
+                            >
+                                <img
+                                    alt={props.intl.formatMessage(messages.brushCircle)}
+                                    className={styles.buttonGroupButtonIcon}
+                                    draggable={false}
+                                    src={brushCircleIcon}
+                                />
+                            </Button>
+                            <Button
+                                className={
+                                    classNames(styles.buttonGroupButton)
+                                }
+                                disabled={props.brushType === 'SQUARE'}
+                                onClick={props.onBrushSquare}
+                            >
+                                <img
+                                    alt={props.intl.formatMessage(messages.brushSquare)}
+                                    className={styles.buttonGroupButtonIcon}
+                                    draggable={false}
+                                    src={brushSquareIcon}
+                                />
+                            </Button>
+                        </ButtonGroup>
+                    </InputGroup>
+                )}
+                {props.mode === Modes.BRUSH && (
                     <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
                         <LabeledIconButton
                             highlighted={props.brushPressure}
@@ -159,8 +390,8 @@ const ModeToolsComponent = props => {
                             onClick={props.onBrushPressureClick}
                             gray
                         />
-                    </InputGroup> : null
-                }
+                    </InputGroup>
+                )}
             </div>
         );
     }
@@ -170,12 +401,16 @@ const ModeToolsComponent = props => {
     {
         const currentIcon = isVector(props.format) ? eraserIcon : bitEraserIcon;
         const currentEraserValue = isBitmap(props.format) ? props.bitEraserSize : props.eraserValue;
+        const currentEraserSimplifyValue = props.eraserSimplifyValue;
         const changeFunction = isBitmap(props.format) ? props.onBitEraserSliderChange : props.onEraserSliderChange;
+        const changeFunctionSimplify = props.onEraserSimplifySliderChange;
+        const hasSimplifyOption = props.mode === Modes.ERASER;
         return (
             <div className={classNames(props.className, styles.modeTools)}>
                 <div>
                     <img
                         alt={props.intl.formatMessage(messages.eraserSize)}
+                        title={props.intl.formatMessage(messages.eraserSize)}
                         className={styles.modeToolsIcon}
                         draggable={false}
                         src={currentIcon}
@@ -190,12 +425,282 @@ const ModeToolsComponent = props => {
                     value={currentEraserValue}
                     onSubmit={changeFunction}
                 />
+
+                {hasSimplifyOption && (
+                    <Label
+                        text={props.intl.formatMessage(messages.eraserSimplify)}
+                        style={{marginLeft: 'calc(2 * .25rem)'}}
+                    >
+                        <LiveInput
+                            range
+                            small
+                            max={1000}
+                            min="0"
+                            type="number"
+                            value={currentEraserSimplifyValue}
+                            onSubmit={changeFunctionSimplify}
+                        />
+                    </Label>
+                )}
+
+                {/* TODO replace this with a dropdown when we add more brush shapes */}
+                {hasSimplifyOption && (
+                    <InputGroup>
+                        <ButtonGroup>
+                            <Button
+                                className={
+                                    classNames(styles.buttonGroupButton)
+                                }
+                                onClick={props.onBrushCircle}
+                            >
+                                <img
+                                    alt={props.intl.formatMessage(messages.brushCircle)}
+                                    className={styles.buttonGroupButtonIcon}
+                                    draggable={false}
+                                    src={brushCircleIcon}
+                                />
+                            </Button>
+                            <Button
+                                className={
+                                    classNames(styles.buttonGroupButton)
+                                }
+                                onClick={props.onBrushSquare}
+                            >
+                                <img
+                                    alt={props.intl.formatMessage(messages.brushSquare)}
+                                    className={styles.buttonGroupButtonIcon}
+                                    draggable={false}
+                                    src={brushSquareIcon}
+                                />
+                            </Button>
+                        </ButtonGroup>
+                    </InputGroup>
+                )}
+            </div>
+        );
+    }
+    case Modes.ROUNDED_RECT:
+        /* falls through */
+    case Modes.RECT:
+    {
+        const isRoundedRect = props.mode === Modes.ROUNDED_RECT;
+        const currentCornerValue = isRoundedRect ?
+            props.roundedRectCornerValue : props.roundedCornerValue;
+        const changeFunction = isRoundedRect ?
+            props.onRoundedRectCornerSliderChange : props.onRoundedCornerSliderChange;
+        return (
+            <div className={classNames(props.className, styles.modeTools)}>
+                <div>
+                    <img
+                        alt={props.intl.formatMessage(messages.roundedCornerSize)}
+                        title={props.intl.formatMessage(messages.roundedCornerSize)}
+                        className={styles.modeToolsIcon}
+                        draggable={false}
+                        src={roundedRectIcon}
+                    />
+                </div>
+                <LiveInput
+                    range
+                    small
+                    min={0}
+                    max={1000}
+                    type="number"
+                    value={currentCornerValue}
+                    onSubmit={changeFunction}
+                />
+            </div>
+        );
+    }
+    case Modes.TRIANGLE:
+    {
+        const currentSideValue = props.trianglePolyValue;
+        const currentPointValue = props.trianglePointValue;
+        const changeFunction = props.onPolyCountSliderChange;
+        const changeFunctionPoint = props.onPointCountSliderChange;
+        return (
+            <div className={classNames(props.className, styles.modeTools)}>
+                <div>
+                    <img
+                        alt={props.intl.formatMessage(messages.currentSideCount)}
+                        title={props.intl.formatMessage(messages.currentSideCount)}
+                        className={styles.modeToolsIcon}
+                        draggable={false}
+                        src={triangleIcon}
+                    />
+                </div>
+                <LiveInput
+                    range
+                    small
+                    max={1000}
+                    min="3"
+                    type="number"
+                    value={currentSideValue}
+                    onSubmit={changeFunction}
+                />
+                <div>
+                    <img
+                        alt={props.intl.formatMessage(messages.spokeRatio)}
+                        title={props.intl.formatMessage(messages.spokeRatio)}
+                        className={styles.modeToolsIcon}
+                        draggable={false}
+                        src={triangleSpikeRatioIcon}
+                    />
+                </div>
+                <LiveInput
+                    range
+                    small
+                    max={1000}
+                    min="0" // The reducer enforces the minimum ratio.
+                    step="0.1"
+                    type="number"
+                    value={currentPointValue}
+                    onSubmit={changeFunctionPoint}
+                />
+            </div>
+        );
+    }
+    case Modes.SUSSY:
+    {
+        const currentlySelectedShape = props.currentlySelectedShape;
+        const changeFunction = props.onCurrentlySelectedShapeChange;
+        const selectedShapeObject = sussyToolShapes
+            .filter(shape => shape.id === currentlySelectedShape)[0];
+        const categorizedShapes = categorizeSussyShapes(sussyToolShapes);
+        const selectableShapesList = (
+            <InputGroup
+                className={classNames(
+                    styles.modDashedBorder,
+                    styles.dropItemShapeToolMenu,
+                    styles.dropdownMaxItemList
+                )}
+            >
+                {Object.keys(categorizedShapes).map(categoryId => (categorizedShapes[categoryId].length === 0 ?
+                    (<React.Fragment key={categoryId} />) : (<React.Fragment key={categoryId}>
+                        <p className={classNames(styles.dropItemShapeToolLabel)}>
+                            {sussyToolCategories[categoryId]}
+                        </p>
+                        {categorizedShapes[categoryId].map(shape => (
+                            <LabeledIconButton
+                                key={shape.id}
+                                className={classNames(styles.dropItemShapeTool)}
+                                hideLabel={hideLabel(props.intl.locale)}
+                                imgSrc={`data:image/svg+xml,${encodeURIComponent(generateSussyShapeSVG(shape))}`}
+                                title={shape.name}
+                                onClick={() => changeFunction(shape.id)}
+                            />
+                        ))}
+                    </React.Fragment>)))}
+            </InputGroup>
+        );
+        return (
+            <div className={classNames(props.className, styles.modeTools)}>
+                <Dropdown
+                    className={styles.modUnselect}
+                    enterExitTransitionDurationMs={20}
+                    popoverContent={
+                        <InputGroup
+                            className={styles.modContextMenu}
+                            rtl={props.rtl}
+                        >
+                            {selectableShapesList}
+                        </InputGroup>
+                    }
+                    tipSize={.01}
+                >
+                    <img
+                        src={`data:image/svg+xml,${encodeURIComponent(generateSussyShapeSVG(selectedShapeObject))}`}
+                        alt={selectedShapeObject.name}
+                        title={selectedShapeObject.name}
+                        height={16}
+                    />
+                </Dropdown>
+            </div>
+        );
+    }
+    case Modes.PEN:
+    {
+        const currentPenSimplifyValue = props.penSimplifyValue;
+        const changeFunctionSimplify = props.onPenSimplifySliderChange;
+        return (
+            <div className={classNames(props.className, styles.modeTools)}>
+                <Label
+                    text={props.intl.formatMessage(messages.eraserSimplify)}
+                    style={{marginLeft: 'calc(2 * .25rem)'}}
+                >
+                    <LiveInput
+                        range
+                        small
+                        max={1000}
+                        min="0"
+                        type="number"
+                        value={currentPenSimplifyValue}
+                        onSubmit={changeFunctionSimplify}
+                    />
+                </Label>
             </div>
         );
     }
     case Modes.RESHAPE:
+        const lineEndsReshape = (
+            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    disabled={props.hasSelectedRoundEnds}
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={roundLine}
+                    title={props.intl.formatMessage(messages.endRounded)}
+                    onClick={props.onRoundEnds}
+                />
+                <LabeledIconButton
+                    disabled={props.hasSelectedSquareEnds}
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={squareLine}
+                    title={props.intl.formatMessage(messages.endSquared)}
+                    onClick={props.onSquareEnds}
+                />
+            </InputGroup>
+        );
+        const lineJoinReshape = (
+            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    disabled={props.hasSelectedMiterLineJoin}
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={miterLineJoin}
+                    title={props.intl.formatMessage(messages.joinSpiked)}
+                    onClick={props.onMiterLineJoin}
+                />
+                <LabeledIconButton
+                    disabled={props.hasSelectedRoundLineJoin}
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={roundLineJoin}
+                    title={props.intl.formatMessage(messages.joinRounded)}
+                    onClick={props.onRoundLineJoin}
+                />
+                <LabeledIconButton
+                    disabled={props.hasSelectedBevelLineJoin}
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={bevelLineJoin}
+                    title={props.intl.formatMessage(messages.joinBeveled)}
+                    onClick={props.onBevelLineJoin}
+                />
+            </InputGroup>
+        );
+        const deleteSelectedNodes = (
+            <InputGroup className={classNames(styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={deleteIcon}
+                    title={props.intl.formatMessage(messages.delete)}
+                    onClick={props.onDelete}
+                />
+            </InputGroup>
+        );
         return (
             <div className={classNames(props.className, styles.modeTools)}>
+                <InputGroup className={styles.modDashedBorder}>
+                    <DashArrayDropdown
+                        onUpdateImage={props.onUpdateImage}
+                    />
+                </InputGroup>
                 <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
                     <LabeledIconButton
                         disabled={!props.hasSelectedUncurvedPoints}
@@ -212,21 +717,94 @@ const ModeToolsComponent = props => {
                         onClick={props.onPointPoints}
                     />
                 </InputGroup>
-                <InputGroup className={classNames(styles.modLabeledIconHeight)}>
-                    <LabeledIconButton
-                        hideLabel={hideLabel(props.intl.locale)}
-                        imgSrc={deleteIcon}
-                        title={props.intl.formatMessage(messages.delete)}
-                        onClick={props.onDelete}
-                    />
-                </InputGroup>
+                <MediaQuery minWidth={layout.fullSizeEditorMinWidthExtraToolsCollapsed}>
+                    {lineEndsReshape}
+                    {lineJoinReshape}
+                    {deleteSelectedNodes}
+                </MediaQuery>
+                <MediaQuery maxWidth={layout.fullSizeEditorMinWidthExtraToolsCollapsed - 1}>
+                    <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                        <Dropdown
+                            className={styles.modUnselect}
+                            enterExitTransitionDurationMs={20}
+                            popoverContent={
+                                <InputGroup
+                                    className={styles.modContextMenu}
+                                    rtl={props.rtl}
+                                >
+                                    {lineEndsReshape}
+                                    {lineJoinReshape}
+                                    {deleteSelectedNodes}
+                                </InputGroup>
+                            }
+                            tipSize={.01}
+                        >
+                            {props.intl.formatMessage(messages.more)}
+                        </Dropdown>
+                    </InputGroup>
+                </MediaQuery>
             </div>
         );
     case Modes.BIT_SELECT:
     case Modes.BIT_LASSO:
         /* falls through */
     case Modes.SELECT:
+        /* falls through */
     case Modes.LASSO:
+        const reshapingMethods = props.format.startsWith('BITMAP') ? null : (
+            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={shapeMergeIcon}
+                    title={props.intl.formatMessage(messages.merge)}
+                    onClick={props.onMergeShape}
+                />
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={shapeMaskIcon}
+                    title={props.intl.formatMessage(messages.mask)}
+                    onClick={props.onMaskShape}
+                />
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={shapeSubtractIcon}
+                    title={props.intl.formatMessage(messages.subtract)}
+                    onClick={props.onSubtractShape}
+                />
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={shapeFilterIcon}
+                    title={props.intl.formatMessage(messages.filter)}
+                    onClick={props.onExcludeShape}
+                />
+            </InputGroup>
+        );
+        const flipOptions = (
+            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    hideLabel={props.intl.locale !== 'en'}
+                    imgSrc={flipHorizontalIcon}
+                    title={props.intl.formatMessage(messages.flipHorizontal)}
+                    onClick={props.onFlipHorizontal}
+                />
+                <LabeledIconButton
+                    hideLabel={props.intl.locale !== 'en'}
+                    imgSrc={flipVerticalIcon}
+                    title={props.intl.formatMessage(messages.flipVertical)}
+                    onClick={props.onFlipVertical}
+                />
+            </InputGroup>
+        );
+        const otherOptions = (
+            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                <LabeledIconButton
+                    hideLabel={hideLabel(props.intl.locale)}
+                    imgSrc={centerSelectionIcon}
+                    title={props.intl.formatMessage(messages.movementCenter)}
+                    onClick={props.onCenterSelection}
+                />
+            </InputGroup>
+        );
         return (
             <div className={classNames(props.className, styles.modeTools)}>
                 <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
@@ -243,6 +821,12 @@ const ModeToolsComponent = props => {
                         title={props.intl.formatMessage(messages.paste)}
                         onClick={props.onPasteFromClipboard}
                     />
+                    <LabeledIconButton
+                        hideLabel={hideLabel(props.intl.locale)}
+                        imgSrc={cutIcon}
+                        title={props.intl.formatMessage(messages.cut)}
+                        onClick={props.onCutToClipboard}
+                    />
                 </InputGroup>
                 <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
                     <LabeledIconButton
@@ -252,20 +836,60 @@ const ModeToolsComponent = props => {
                         onClick={props.onDelete}
                     />
                 </InputGroup>
-                <InputGroup className={classNames(styles.modLabeledIconHeight)}>
-                    <LabeledIconButton
-                        hideLabel={props.intl.locale !== 'en'}
-                        imgSrc={flipHorizontalIcon}
-                        title={props.intl.formatMessage(messages.flipHorizontal)}
-                        onClick={props.onFlipHorizontal}
-                    />
-                    <LabeledIconButton
-                        hideLabel={props.intl.locale !== 'en'}
-                        imgSrc={flipVerticalIcon}
-                        title={props.intl.formatMessage(messages.flipVertical)}
-                        onClick={props.onFlipVertical}
-                    />
-                </InputGroup>
+                <MediaQuery minWidth={layout.fullSizeEditorMinWidthExtraToolsCollapsed}>
+                    {/* Flip Options */}
+                    {flipOptions}
+                    {/* Other Options */}
+                    {otherOptions}
+                    {/* Reshaping Methods */}
+                    {(props.mode === Modes.SELECT) ? (
+                        <MediaQuery minWidth={layout.fullSizeEditorMinWidthExtraTools}>
+                            {reshapingMethods}
+                        </MediaQuery>
+                    ) : null}
+                    {(props.mode === Modes.SELECT) ? (
+                        <MediaQuery maxWidth={layout.fullSizeEditorMinWidthExtraTools - 1}>
+                            <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                                <Dropdown
+                                    className={styles.modUnselect}
+                                    enterExitTransitionDurationMs={20}
+                                    popoverContent={
+                                        <InputGroup
+                                            className={styles.modContextMenu}
+                                            rtl={props.rtl}
+                                        >
+                                            {reshapingMethods}
+                                        </InputGroup>
+                                    }
+                                    tipSize={.01}
+                                >
+                                    {props.intl.formatMessage(messages.more)}
+                                </Dropdown>
+                            </InputGroup>
+                        </MediaQuery>
+                    ) : null}
+                </MediaQuery>
+                <MediaQuery maxWidth={layout.fullSizeEditorMinWidthExtraToolsCollapsed - 1}>
+                    <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                        <Dropdown
+                            className={styles.modUnselect}
+                            enterExitTransitionDurationMs={20}
+                            popoverContent={
+                                <InputGroup
+                                    className={styles.modContextMenu}
+                                    rtl={props.rtl}
+                                >
+                                    {flipOptions}
+                                    {otherOptions}
+                                    {reshapingMethods}
+                                </InputGroup>
+                            }
+                            tipSize={.01}
+                        >
+                            {props.intl.formatMessage(messages.more)}
+                        </Dropdown>
+                    </InputGroup>
+                </MediaQuery>
             </div>
         );
     case Modes.BIT_TEXT:
@@ -273,12 +897,42 @@ const ModeToolsComponent = props => {
     case Modes.TEXT:
         return (
             <div className={classNames(props.className, styles.modeTools)}>
-                <InputGroup>
+                <InputGroup className={classNames(styles.modDashedBorder)}>
                     <FontDropdown
                         onUpdateImage={props.onUpdateImage}
                         onManageFonts={props.onManageFonts}
                     />
                 </InputGroup>
+                <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                    <LabeledIconButton
+                        hideLabel
+                        imgSrc={alignLeftIcon}
+                        title={props.intl.formatMessage(messages.leftAlign)}
+                        onClick={props.onTextAlignLeft}
+                    />
+                    <LabeledIconButton
+                        hideLabel
+                        imgSrc={alignCenterIcon}
+                        title={props.intl.formatMessage(messages.centerAlign)}
+                        onClick={props.onTextAlignCenter}
+                    />
+                    <LabeledIconButton
+                        hideLabel
+                        imgSrc={alignRightIcon}
+                        title={props.intl.formatMessage(messages.rightAlign)}
+                        onClick={props.onTextAlignRight}
+                    />
+                </InputGroup>
+                {props.mode === Modes.TEXT && (
+                    <InputGroup className={classNames(styles.modDashedBorder, styles.modLabeledIconHeight)}>
+                        <LabeledIconButton
+                            hideLabel={hideLabel(props.intl.locale)}
+                            imgSrc={text2PathIcon}
+                            title={props.intl.formatMessage(messages.text2Path)}
+                            onClick={props.onText2Path}
+                        />
+                    </InputGroup>
+                )}
             </div>
         );
     case Modes.BIT_RECT:
@@ -295,7 +949,6 @@ const ModeToolsComponent = props => {
                         imgSrc={fillIcon}
                         title={props.intl.formatMessage(messages.filled)}
                         onClick={props.onFillShapes}
-                        gray
                     />
                 </InputGroup>
                 <InputGroup>
@@ -304,7 +957,6 @@ const ModeToolsComponent = props => {
                         imgSrc={outlineIcon}
                         title={props.intl.formatMessage(messages.outlined)}
                         onClick={props.onOutlineShapes}
-                        gray
                     />
                 </InputGroup>
                 {props.fillBitmapShapes ? null : (
@@ -325,26 +977,30 @@ const ModeToolsComponent = props => {
             </div>
         );
     }
-    case Modes.FREEFORM:
+    case Modes.ARROW:
     {
-        const currentFreeformSimplifyValue = props.freeformValue;
-        const changeFunctionSimplify = props.onSimplifySliderChange;
         return (
             <div className={classNames(props.className, styles.modeTools)}>
-                <Label text={props.intl.formatMessage(messages.freeformSimplify)} style={{ marginLeft: 'calc(2 * .25rem)' }}>
+                <span>{`Hold Alt + Shift to resize arrow tip`}</span>
+            </div>
+        );
+    }
+    case Modes.FREEFORM:
+        return (
+            <div className={classNames(props.className, styles.modeTools)}>
+                <Label text={props.intl.formatMessage(messages.freeformSimplify)}>
                     <LiveInput
                         range
                         small
                         max={1000}
                         min="0"
                         type="number"
-                        value={currentFreeformSimplifyValue}
-                        onSubmit={changeFunctionSimplify}
+                        value={props.freeformValue}
+                        onSubmit={props.onFreeformSimplifySliderChange}
                     />
                 </Label>
             </div>
         );
-    }
     default:
         // Leave empty for now, if mode not supported
         return (
@@ -359,31 +1015,73 @@ ModeToolsComponent.propTypes = {
     brushPressure: PropTypes.bool,
     brushValue: PropTypes.number,
     freeformValue: PropTypes.number,
+    simplifyValue: PropTypes.number,
     className: PropTypes.string,
     clipboardItems: PropTypes.arrayOf(PropTypes.array),
     eraserValue: PropTypes.number,
+    eraserSimplifyValue: PropTypes.number,
+    brushType: PropTypes.string,
+    penSimplifyValue: PropTypes.number,
+    roundedCornerValue: PropTypes.number,
+    roundedRectCornerValue: PropTypes.number,
+    trianglePolyValue: PropTypes.number,
+    trianglePointValue: PropTypes.number,
+    currentlySelectedShape: PropTypes.string,
     fillBitmapShapes: PropTypes.bool,
     format: PropTypes.oneOf(Object.keys(Formats)),
     hasSelectedUncurvedPoints: PropTypes.bool,
     hasSelectedUnpointedPoints: PropTypes.bool,
+    hasSelectedRoundEnds: PropTypes.bool,
+    hasSelectedSquareEnds: PropTypes.bool,
+    hasSelectedMiterLineJoin: PropTypes.bool,
+    hasSelectedRoundLineJoin: PropTypes.bool,
+    hasSelectedBevelLineJoin: PropTypes.bool,
     intl: intlShape.isRequired,
     mode: PropTypes.string.isRequired,
+    rtl: PropTypes.bool,
     onBitBrushSliderChange: PropTypes.func.isRequired,
     onBitEraserSliderChange: PropTypes.func.isRequired,
     onBrushPressureClick: PropTypes.func.isRequired,
+    onBrushCircle: PropTypes.func.isRequired,
+    onBrushSquare: PropTypes.func.isRequired,
     onBrushSliderChange: PropTypes.func.isRequired,
+    onSimplifySliderChange: PropTypes.func.isRequired,
+    onFreeformSimplifySliderChange: PropTypes.func.isRequired,
     onCopyToClipboard: PropTypes.func.isRequired,
+    onCutToClipboard: PropTypes.func.isRequired,
     onCurvePoints: PropTypes.func.isRequired,
     onDelete: PropTypes.func.isRequired,
     onEraserSliderChange: PropTypes.func,
+    onEraserSimplifySliderChange: PropTypes.func,
+    onPenSimplifySliderChange: PropTypes.func,
+    onRoundedRectCornerSliderChange: PropTypes.func,
+    onRoundedCornerSliderChange: PropTypes.func,
+    onPolyCountSliderChange: PropTypes.func,
+    onPointCountSliderChange: PropTypes.func,
+    onCurrentlySelectedShapeChange: PropTypes.func,
+    onRoundEnds: PropTypes.func,
+    onSquareEnds: PropTypes.func,
+    onMiterLineJoin: PropTypes.func,
+    onRoundLineJoin: PropTypes.func,
+    onBevelLineJoin: PropTypes.func,
+    onTextAlignLeft: PropTypes.func,
+    onTextAlignRight: PropTypes.func,
+    onTextAlignCenter: PropTypes.func,
     onFillShapes: PropTypes.func.isRequired,
     onFlipHorizontal: PropTypes.func.isRequired,
     onFlipVertical: PropTypes.func.isRequired,
+    onCenterSelection: PropTypes.func.isRequired,
     onManageFonts: PropTypes.func,
     onOutlineShapes: PropTypes.func.isRequired,
     onPasteFromClipboard: PropTypes.func.isRequired,
     onPointPoints: PropTypes.func.isRequired,
-    onUpdateImage: PropTypes.func.isRequired
+    onUpdateImage: PropTypes.func.isRequired,
+    onText2Path: PropTypes.func.isRequired,
+
+    onMergeShape: PropTypes.func.isRequired,
+    onMaskShape: PropTypes.func.isRequired,
+    onSubtractShape: PropTypes.func.isRequired,
+    onExcludeShape: PropTypes.func.isRequired
 };
 
 const mapStateToProps = state => ({
@@ -397,6 +1095,15 @@ const mapStateToProps = state => ({
     clipboardItems: state.scratchPaint.clipboard.items,
     eraserValue: state.scratchPaint.eraserMode.brushSize,
     freeformValue: state.scratchPaint.freeformMode.simplifySize,
+    simplifyValue: state.scratchPaint.brushMode.simplifySize,
+    eraserSimplifyValue: state.scratchPaint.eraserMode.simplifySize,
+    brushType: state.scratchPaint.brushMode.brushType,
+    penSimplifyValue: state.scratchPaint.penMode.simplifySize,
+    roundedRectCornerValue: state.scratchPaint.roundedRectMode.roundedCornerSize,
+    roundedCornerValue: state.scratchPaint.rectMode.roundedCornerSize,
+    trianglePolyValue: state.scratchPaint.triangleMode.trianglePolyCount,
+    trianglePointValue: state.scratchPaint.triangleMode.trianglePointCount,
+    currentlySelectedShape: state.scratchPaint.sussyMode.shape
 });
 const mapDispatchToProps = dispatch => ({
     onBrushSliderChange: brushSize => {
@@ -406,7 +1113,25 @@ const mapDispatchToProps = dispatch => ({
         dispatch(toggleBrushPressure());
     },
     onSimplifySliderChange: size => {
-        dispatch(changeSimplifySize(size));
+        dispatch(changeBrushSimplifySize(size));
+    },
+    onFreeformSimplifySliderChange: size => {
+        dispatch(changeFreeformSimplifySize(size));
+    },
+    onRoundedRectCornerSliderChange: roundedCornerSize => {
+        dispatch(changeRoundedRectCornerSize(roundedCornerSize));
+    },
+    onRoundedCornerSliderChange: roundedCornerSize => {
+        dispatch(changeRoundedCornerSize(roundedCornerSize));
+    },
+    onPolyCountSliderChange: polyCount => {
+        dispatch(changeTrianglePolyCount(polyCount));
+    },
+    onPointCountSliderChange: polyCount => {
+        dispatch(changeTrianglePointCount(polyCount));
+    },
+    onCurrentlySelectedShapeChange: shape => {
+        dispatch(changeCurrentlySelectedShape(shape));
     },
     onBitBrushSliderChange: bitBrushSize => {
         dispatch(changeBitBrushSize(bitBrushSize));
@@ -417,11 +1142,32 @@ const mapDispatchToProps = dispatch => ({
     onEraserSliderChange: eraserSize => {
         dispatch(changeEraserSize(eraserSize));
     },
+    onEraserSimplifySliderChange: eraserSize => {
+        dispatch(changeEraserSimplifySize(eraserSize));
+    },
+    onBrushCircle: () => {
+        dispatch(setBrushType('CIRCLE'));
+    },
+    onBrushSquare: () => {
+        dispatch(setBrushType('SQUARE'));
+    },
+    onPenSimplifySliderChange: eraserSize => {
+        dispatch(changePenSimplifySize(eraserSize));
+    },
     onFillShapes: () => {
         dispatch(setShapesFilled(true));
     },
     onOutlineShapes: () => {
         dispatch(setShapesFilled(false));
+    },
+    onTextAlignLeft: () => {
+        dispatch(setTextAlignment('left'));
+    },
+    onTextAlignRight: () => {
+        dispatch(setTextAlignment('right'));
+    },
+    onTextAlignCenter: () => {
+        dispatch(setTextAlignment('center'));
     }
 });
 

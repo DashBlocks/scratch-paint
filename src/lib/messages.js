@@ -37,7 +37,7 @@ const messages = defineMessages({
         id: 'paint.reshapeMode.reshape'
     },
     roundedRect: {
-        defaultMessage: 'Rounded Rectangle',
+        defaultMessage: 'Rounded rectangle',
         description: 'Label for the rounded rectangle tool',
         id: 'pm.paint.roundedRectMode.roundedRect'
     },
@@ -55,6 +55,11 @@ const messages = defineMessages({
         defaultMessage: 'Shapes',
         description: 'Label for the shape tool',
         id: 'pm.paint.shapeMode.shape'
+    },
+    dragon: {
+        defaultMessage: 'Dragon',
+        description: 'Label for the totally a normal dragon head drawer dragon drawing tool',
+        id: 'dash.paint.dragonMode.dragon'
     },
     triangle: {
         defaultMessage: 'Triangle',

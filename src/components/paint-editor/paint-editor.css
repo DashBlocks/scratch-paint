@@ -9,7 +9,6 @@
     flex-direction: column;
     padding: calc(3 * $grid-unit);
 }
-
 .editor-container.fullscreen {
 	background: var(--assets-background, #fff);
     position: fixed;

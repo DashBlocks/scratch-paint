@@ -2,37 +2,57 @@ import log from '../log/log';
 
 const CHANGE_BRUSH_SIZE = 'scratch-paint/brush-mode/CHANGE_BRUSH_SIZE';
 const CHANGE_SMOOTHING_SIZE = 'scratch-paint/brush-mode/CHANGE_SMOOTHING_SIZE';
+const CHANGE_SIMPLIFY_SIZE = 'scratch-paint/brush-mode/CHANGE_SIMPLIFY_SIZE';
 const CHANGE_BRUSH_TYPE = 'scratch-paint/brush-mode/CHANGE_BRUSH_TYPE';
 const TOGGLE_BRUSH_PRESSURE = 'scratch-paint/brush-mode/TOGGLE_BRUSH_PRESSURE';
 const initialState = {
     brushSize: 10,
     smoothingSize: 10,
-    brushType: "CIRCLE",
+    simplifySize: 10,
+    brushType: 'CIRCLE',
     pressureEnabled: false
 };
 
 const reducer = function (state, action) {
     if (typeof state === 'undefined') state = initialState;
-    let {brushSize, smoothingSize, brushType, pressureEnabled} = state;
+    const {brushSize, smoothingSize, simplifySize, brushType, pressureEnabled} = state;
     switch (action.type) {
-        case CHANGE_BRUSH_SIZE:
-            if (isNaN(action.brushSize)) {
-                log.warn(`Invalid brush size: ${action.brushSize}`);
-                return state;
-            }
-            return { brushSize: Math.max(1, action.brushSize), smoothingSize, brushType, pressureEnabled };
-        case CHANGE_SMOOTHING_SIZE:
-            if (isNaN(action.smoothingSize)) {
-                log.warn(`Invalid smoothing setting: ${action.smoothingSize}`);
-                return state;
-            }
-            return { brushSize, smoothingSize: Math.max(0, action.smoothingSize), brushType, pressureEnabled };
-        case CHANGE_BRUSH_TYPE:
-            return { brushSize, smoothingSize, brushType: String(action.brush), pressureEnabled };
-        case TOGGLE_BRUSH_PRESSURE:
-            return { brushSize, smoothingSize, brushType, pressureEnabled: !pressureEnabled };
-        default:
+    case CHANGE_BRUSH_SIZE:
+        if (isNaN(action.brushSize)) {
+            log.warn(`Invalid brush size: ${action.brushSize}`);
             return state;
+        }
+        return {brushSize: Math.max(1, action.brushSize), smoothingSize, simplifySize, brushType, pressureEnabled};
+    case CHANGE_SMOOTHING_SIZE:
+        if (isNaN(action.smoothingSize)) {
+            log.warn(`Invalid smoothing setting: ${action.smoothingSize}`);
+            return state;
+        }
+        return {
+            brushSize,
+            smoothingSize: Math.max(0, action.smoothingSize),
+            simplifySize: Math.max(0, action.smoothingSize),
+            brushType,
+            pressureEnabled
+        };
+    case CHANGE_SIMPLIFY_SIZE:
+        if (isNaN(action.simplifySize)) {
+            log.warn(`Invalid simplify setting: ${action.simplifySize}`);
+            return state;
+        }
+        return {
+            brushSize,
+            smoothingSize: Math.max(0, action.simplifySize),
+            simplifySize: Math.max(0, action.simplifySize),
+            brushType,
+            pressureEnabled
+        };
+    case CHANGE_BRUSH_TYPE:
+        return {brushSize, smoothingSize, simplifySize, brushType: String(action.brush), pressureEnabled};
+    case TOGGLE_BRUSH_PRESSURE:
+        return {brushSize, smoothingSize, simplifySize, brushType, pressureEnabled: !pressureEnabled};
+    default:
+        return state;
     }
 };
 
@@ -51,7 +71,14 @@ const changeSmoothingSize = function (smoothingSize) {
     };
 };
 
-const changeBrushType = function (type) {
+const changeSimplifySize = function (simplifySize) {
+    return {
+        type: CHANGE_SIMPLIFY_SIZE,
+        simplifySize: simplifySize
+    };
+};
+
+const setBrushType = function (type) {
     return {
         type: CHANGE_BRUSH_TYPE,
         brush: type
@@ -68,6 +95,8 @@ export {
     reducer as default,
     changeBrushSize,
     changeSmoothingSize,
-    changeBrushType,
-    toggleBrushPressure,
+    changeSimplifySize,
+    setBrushType as changeBrushType,
+    setBrushType,
+    toggleBrushPressure
 };

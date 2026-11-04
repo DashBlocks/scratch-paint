@@ -17,7 +17,7 @@ const vectorModesObj = {
     SUSSY: null,
     TRIANGLE: null,
     ARROW: null,
-    FREEFORM: null,
+    FREEFORM: null
 };
 const bitmapModesObj = {
     BIT_BRUSH: null,

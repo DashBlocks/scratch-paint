@@ -173,7 +173,15 @@ const pan = (dx, dy) => {
  * @returns {paper.Rectangle} the bounds within which mouse events should work in the paint editor
  */
 const getActionBounds = isBitmap => {
-    return paper.view.bounds.unite(ART_BOARD_BOUNDS).intersect(MAX_WORKSPACE_BOUNDS);
+    if (isBitmap) {
+        return ART_BOARD_BOUNDS;
+    }
+    return {
+        left: -Infinity,
+        right: Infinity,
+        top: -Infinity,
+        bottom: Infinity
+    };
 };
 
 const zoomToFit = isBitmap => {
