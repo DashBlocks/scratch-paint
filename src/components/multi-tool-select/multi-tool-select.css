@@ -35,6 +35,7 @@
     top: 2px;
     right: 2px;
     filter: $filter-icon-gray;
+    pointer-events: none;
 }
 
 .selected .arrow {

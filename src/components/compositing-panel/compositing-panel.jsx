@@ -3,7 +3,6 @@ import React from 'react';
 import {connect} from 'react-redux';
 import {FormattedMessage, defineMessages, injectIntl, intlShape} from 'react-intl';
 import bindAll from 'lodash.bindall';
-import classNames from 'classnames';
 import paper from '@turbowarp/paper';
 
 import {getSelectedRootItems} from '../../helper/selection.js';
@@ -161,9 +160,10 @@ class CompositingPanel extends React.Component {
     }
 
     render () {
+        const selectedRootItems = getSelectedRootItems();
         return (
-            <PanelComponent panel={Panels.COMPOSITING}>
-                {paper.project && getSelectedRootItems().length > 0 && (<React.Fragment>
+            <PanelComponent panel={Panels.COMPOSITING} disabled={selectedRootItems.length === 0}>
+                {paper.project && (<React.Fragment>
                     <div className={styles.row}>
                         <div className={styles.rowHeader}>
                             <span className={styles.labelName}>
@@ -177,7 +177,7 @@ class CompositingPanel extends React.Component {
                         <div>
                             <Select
                                 className={styles.select}
-                                value={getSelectedRootItems()[0].blendMode}
+                                value={selectedRootItems[0]?.blendMode}
                                 onChange={this.setBlendMode}
                                 options={[
                                     [this.props.intl.formatMessage(messages.normal), 'normal'],
@@ -210,14 +210,14 @@ class CompositingPanel extends React.Component {
                                 />
                             </span>
                             <TWColorReadout
-                                value={getSelectedRootItems()[0].opacity * 100}
+                                value={selectedRootItems[0]?.opacity * 100}
                                 onChange={this.onSubmit}
                             />
                         </div>
                         <div>
                             <Slider
                                 background={this.opacityBackground}
-                                value={getSelectedRootItems()[0].opacity * 100}
+                                value={selectedRootItems[0]?.opacity * 100}
                                 onChange={this.changeOpacity}
                                 onSubmit={this.onSubmitOpacity}
                             />
