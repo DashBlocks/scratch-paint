@@ -180,7 +180,7 @@ class CompositingPanel extends React.Component {
     }
 
     render () {
-        const selectedLeafItems = getSelectedLeafItems();
+        const selectedLeafItems = paper.project ? getSelectedLeafItems() : [];
         return (
             <PanelComponent panel={Panels.COMPOSITING} disabled={selectedLeafItems.length === 0}>
                 {paper.project && (<React.Fragment>
