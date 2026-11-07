@@ -11,6 +11,7 @@
     position: relative;
     border: 1px solid $form-border;
     border-radius: 100%;
+    overflow: hidden;
     background: $input-background;
 }
 
