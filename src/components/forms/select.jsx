@@ -15,7 +15,7 @@ import styles from './select.css';
 const Input = props => {
     return (
         <select
-            {...props}
+            onChange={props.onChange}
             className={classNames(
                 styles.select,
                 props.className
@@ -30,7 +30,8 @@ const Input = props => {
 
 Input.propTypes = {
     className: PropTypes.string,
-    options: PropTypes.arrayOf(PropTypes.array)
+    options: PropTypes.arrayOf(PropTypes.array),
+    onChange: PropTypes.func
 };
 
 export default Input;
