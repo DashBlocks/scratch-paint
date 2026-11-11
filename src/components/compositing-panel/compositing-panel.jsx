@@ -195,7 +195,7 @@ class CompositingPanel extends React.Component {
                             </span>
                             <TWColorReadout
                                 value={selectedLeafItems[0]?.opacity * 100 || 0}
-                                onChange={this.onSubmit}
+                                onChange={this.onSubmitOpacity}
                             />
                         </div>
                         <div>
