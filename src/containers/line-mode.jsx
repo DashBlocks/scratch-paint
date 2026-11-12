@@ -5,17 +5,21 @@ import {connect} from 'react-redux';
 import bindAll from 'lodash.bindall';
 import Modes from '../lib/modes';
 import ColorStyleProptype from '../lib/color-style-proptype';
+import GradientTypes from '../lib/gradient-types';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 import {clearSelection} from '../helper/selection';
 import {endPointHit, touching} from '../helper/snapping';
 import {drawHitPoint, removeHitPoint} from '../helper/guides';
 import {styleShape, MIXED} from '../helper/style-path';
-import {changeStrokeColor, clearStrokeGradient} from '../reducers/stroke-style';
+import {changeStrokeColor} from '../reducers/stroke-style';
 import {changeStrokeWidth} from '../reducers/stroke-width';
 import {changeMode} from '../reducers/modes';
 import {clearSelectedItems} from '../reducers/selected-items';
 import {snapDeltaToAngle} from '../helper/math';
 
 import LineModeComponent from '../components/line-mode/line-mode.jsx';
+
+const TRANSPARENT = 'rgba(0,0,0,0)';
 
 class LineMode extends React.Component {
     static get SNAP_TOLERANCE () {
@@ -59,15 +63,9 @@ class LineMode extends React.Component {
     activateTool () {
         clearSelection(this.props.clearSelectedItems);
         // Force the default line color if stroke is MIXED or transparent
-        const strokeColor1 = this.props.colorState.strokeColor.primary;
-        const strokeColor2 = this.props.colorState.strokeColor.secondary;
-        if (strokeColor1 === MIXED ||
-            (strokeColor1 === null &&
-                (strokeColor2 === null || strokeColor2 === MIXED))) {
+        const strokeColor1 = this.props.colorState.strokeColor.stops[0].color;
+        if (strokeColor1 === MIXED || colorIsTransparent(strokeColor1)) {
             this.props.onChangeStrokeColor(LineMode.DEFAULT_COLOR);
-        }
-        if (strokeColor2 === MIXED) {
-            this.props.clearStrokeGradient();
         }
         // Force a minimum stroke width
         if (!this.props.colorState.strokeWidth) {
@@ -107,7 +105,13 @@ class LineMode extends React.Component {
         if (this.hitResult) {
             this.path = this.hitResult.path;
             styleShape(this.path, {
-                fillColor: null,
+                fillColor: {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                },
                 strokeColor: this.props.colorState.strokeColor,
                 strokeWidth: this.props.colorState.strokeWidth
             });
@@ -124,7 +128,13 @@ class LineMode extends React.Component {
             this.path = new paper.Path();
             this.path.strokeCap = 'round';
             styleShape(this.path, {
-                fillColor: null,
+                fillColor: {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                },
                 strokeColor: this.props.colorState.strokeColor,
                 strokeWidth: this.props.colorState.strokeWidth
             });
@@ -201,7 +211,13 @@ class LineMode extends React.Component {
         }
 
         styleShape(this.path, {
-            fillColor: null,
+            fillColor: {
+                stops: [{
+                    color: TRANSPARENT,
+                    offset: 0
+                }],
+                gradientType: GradientTypes.SOLID
+            },
             strokeColor: this.props.colorState.strokeColor,
             strokeWidth: this.props.colorState.strokeWidth
         });
@@ -245,7 +261,13 @@ class LineMode extends React.Component {
         }
 
         styleShape(this.path, {
-            fillColor: null,
+            fillColor: {
+                stops: [{
+                    color: TRANSPARENT,
+                    offset: 0
+                }],
+                gradientType: GradientTypes.SOLID
+            },
             strokeColor: this.props.colorState.strokeColor,
             strokeWidth: this.props.colorState.strokeWidth
         });
@@ -300,14 +322,11 @@ const mapDispatchToProps = dispatch => ({
     clearSelectedItems: () => {
         dispatch(clearSelectedItems());
     },
-    clearStrokeGradient: () => {
-        dispatch(clearStrokeGradient());
-    },
     handleMouseDown: () => {
         dispatch(changeMode(Modes.LINE));
     },
     onChangeStrokeColor: strokeColor => {
-        dispatch(changeStrokeColor(strokeColor));
+        dispatch(changeStrokeColor(strokeColor, 0));
     },
     onChangeStrokeWidth: strokeWidth => {
         dispatch(changeStrokeWidth(strokeWidth));

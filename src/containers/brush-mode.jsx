@@ -6,6 +6,7 @@ import Modes from '../lib/modes';
 import ColorStyleProptype from '../lib/color-style-proptype';
 import Blobbiness from '../helper/blob-tools/blob';
 import {MIXED} from '../helper/style-path';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 
 import {changeFillColor, clearFillGradient, DEFAULT_COLOR} from '../reducers/fill-style';
 import {changeMode} from '../reducers/modes';
@@ -26,7 +27,7 @@ class BrushMode extends React.Component {
     }
     componentDidMount () {
         if (this.props.isBrushModeActive) {
-            this.activateTool(this.props);
+            this.activateTool();
         }
     }
     componentWillReceiveProps (nextProps) {
@@ -38,8 +39,8 @@ class BrushMode extends React.Component {
             const {fillColor, strokeColor, strokeWidth} = nextProps.colorState;
             this.blob.setOptions({
                 isEraser: false,
-                fillColor: fillColor.primary,
-                strokeColor: strokeColor.primary,
+                fillColor: fillColor.stops[0].color,
+                strokeColor: strokeColor.stops[0].color,
                 strokeWidth,
                 ...nextProps.brushModeState
             });
@@ -59,13 +60,17 @@ class BrushMode extends React.Component {
         clearSelection(this.props.clearSelectedItems);
         this.props.clearGradient();
         // Force the default brush color if fill is MIXED or transparent
-        const fillColor = this.props.colorState.fillColor.primary;
-        if (fillColor === MIXED || fillColor === null) {
+        const color = this.props.colorState.fillColor.stops[0].color;
+        if (color === MIXED || colorIsTransparent(color)) {
             this.props.onChangeFillColor(DEFAULT_COLOR);
         }
+
+        const {fillColor, strokeColor, strokeWidth} = this.props.colorState;
         this.blob.activateTool({
             isEraser: false,
-            ...this.props.colorState,
+            fillColor: fillColor.stops[0].color,
+            strokeColor: strokeColor.stops[0].color,
+            strokeWidth,
             ...this.props.brushModeState
         });
     }
@@ -116,7 +121,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(changeMode(Modes.BRUSH));
     },
     onChangeFillColor: fillColor => {
-        dispatch(changeFillColor(fillColor));
+        dispatch(changeFillColor(fillColor, 0));
     }
 });
 

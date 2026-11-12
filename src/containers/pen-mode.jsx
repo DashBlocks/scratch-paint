@@ -4,13 +4,14 @@ import {connect} from 'react-redux';
 import bindAll from 'lodash.bindall';
 import Modes from '../lib/modes';
 
-import {changeStrokeColor} from '../reducers/stroke-style';
+import {changeStrokeColor, clearStrokeGradient} from '../reducers/stroke-style';
 import {changeStrokeWidth} from '../reducers/stroke-width';
 import {changeMode} from '../reducers/modes';
 import {clearSelectedItems} from '../reducers/selected-items';
 import {MIXED} from '../helper/style-path';
 import {changeSimplifySize} from '../reducers/pen-mode';
 import ColorStyleProptype from '../lib/color-style-proptype';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 
 import {clearSelection} from '../helper/selection';
 import PenTool from '../helper/tools/pen-tool';
@@ -29,12 +30,12 @@ class PenMode extends React.Component {
     }
     componentDidMount () {
         if (this.props.isPenModeActive) {
-            this.activateTool(this.props);
+            this.activateTool();
         }
     }
     componentWillReceiveProps (nextProps) {
         if (this.tool &&
-                (nextProps.colorState.strokeColor !== this.props.colorState.strokeColor ||
+                (nextProps.colorState.strokeColor.stops[0] !== this.props.colorState.strokeColor.stops[0] ||
                 nextProps.colorState.strokeWidth !== this.props.colorState.strokeWidth)) {
             this.tool.setColorState(nextProps.colorState);
         }
@@ -55,8 +56,8 @@ class PenMode extends React.Component {
     activateTool () {
         clearSelection(this.props.clearSelectedItems);
         // Force the default pen color if stroke is MIXED or transparent
-        const {strokeColor} = this.props.colorState;
-        if (strokeColor === MIXED || strokeColor === null) {
+        const color = this.props.colorState.strokeColor.stops[0].color;
+        if (color === MIXED || colorIsTransparent(color)) {
             this.props.onChangeStrokeColor(PenMode.DEFAULT_COLOR);
         }
         // Force a minimum stroke width
@@ -90,6 +91,7 @@ class PenMode extends React.Component {
 }
 
 PenMode.propTypes = {
+    clearGradient: PropTypes.func.isRequired,
     clearSelectedItems: PropTypes.func.isRequired,
     colorState: PropTypes.shape({
         fillStyle: ColorStyleProptype,
@@ -111,6 +113,9 @@ const mapStateToProps = state => ({
     simplifySize: state.scratchPaint.penMode.simplifySize
 });
 const mapDispatchToProps = dispatch => ({
+    clearGradient: () => {
+        dispatch(clearStrokeGradient());
+    },
     clearSelectedItems: () => {
         dispatch(clearSelectedItems());
     },
@@ -120,7 +125,7 @@ const mapDispatchToProps = dispatch => ({
     deactivateTool () {
     },
     onChangeStrokeColor: strokeColor => {
-        dispatch(changeStrokeColor(strokeColor));
+        dispatch(changeStrokeColor(strokeColor, 0));
     },
     onChangeStrokeWidth: strokeWidth => {
         dispatch(changeStrokeWidth(strokeWidth));

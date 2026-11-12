@@ -11,6 +11,7 @@ import {clearSelectedItems} from '../reducers/selected-items.js';
 import {MIXED} from '../helper/style-path.js';
 import {changeSimplifySize} from '../reducers/freeform-mode.js';
 import ColorStyleProptype from '../lib/color-style-proptype.js';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 
 import {clearSelection} from '../helper/selection.js';
 import FreeformTool from '../helper/tools/freeform-tool.js';
@@ -56,9 +57,9 @@ class FreeformMode extends React.Component {
     }
     activateTool () {
         clearSelection(this.props.clearSelectedItems);
-        // Force the default freeform color if stroke is MIXED or transparent
-        const {fillColor} = this.props.colorState;
-        if (fillColor === MIXED || fillColor === null) {
+        // Force the default freeform color if fill is MIXED or transparent
+        const color = this.props.colorState.fillColor.stops[0].color;
+        if (color === MIXED || colorIsTransparent(color)) {
             this.props.onChangeFillColor(FreeformMode.DEFAULT_COLOR);
         }
         if (typeof this.props.simplifySize !== "number") {
