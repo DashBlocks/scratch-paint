@@ -1,5 +1,4 @@
 import React from 'react';
-import parseColor from 'parse-color';
 import PropTypes from 'prop-types';
 import classNames from 'classnames';
 
@@ -9,17 +8,8 @@ import noFillIcon from './no-fill.svg';
 import mixedFillIcon from './mixed-fill.svg';
 import styles from './color-button.css';
 import GradientTypes from '../../lib/gradient-types';
+import { colorIsTransparent } from '../../lib/tw-color-utils';
 import log from '../../log/log';
-
-const colorIsTransparent = colorString => {
-    if (colorString === null) return true;
-    if (colorString.startsWith('#') && colorString.length === 9) {
-        // parseColor does not properly parse alpha of hex colors
-        return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
-    } else {
-        return parseColor(colorString).hsva[3] === 0;
-    }
-};
 
 const stopsToFill = (stops, gradientType, gradientAngle) => {
     switch (gradientType) {

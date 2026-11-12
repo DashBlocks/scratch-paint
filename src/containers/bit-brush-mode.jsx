@@ -4,6 +4,7 @@ import {connect} from 'react-redux';
 import bindAll from 'lodash.bindall';
 import Modes from '../lib/modes';
 import {MIXED} from '../helper/style-path';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 
 import {changeFillColor, clearFillGradient, DEFAULT_COLOR} from '../reducers/fill-style';
 import {changeMode} from '../reducers/modes';
@@ -27,8 +28,8 @@ class BitBrushMode extends React.Component {
         }
     }
     componentWillReceiveProps (nextProps) {
-        if (this.tool && nextProps.color !== this.props.color) {
-            this.tool.setColor(nextProps.color);
+        if (this.tool && nextProps.stops !== this.props.stops) {
+            this.tool.setColor(nextProps.stops[0].color);
         }
         if (this.tool && nextProps.bitBrushSize !== this.props.bitBrushSize) {
             this.tool.setBrushSize(nextProps.bitBrushSize);
@@ -52,8 +53,8 @@ class BitBrushMode extends React.Component {
         clearSelection(this.props.clearSelectedItems);
         this.props.clearGradient();
         // Force the default brush color if fill is MIXED or transparent
-        let color = this.props.color;
-        if (!color || color === MIXED) {
+        let color = this.props.stops[0].color;
+        if (colorIsTransparent(color) || color === MIXED) {
             this.props.onChangeFillColor(DEFAULT_COLOR);
             color = DEFAULT_COLOR;
         }
@@ -84,17 +85,20 @@ BitBrushMode.propTypes = {
     bitBrushSize: PropTypes.number.isRequired,
     clearGradient: PropTypes.func.isRequired,
     clearSelectedItems: PropTypes.func.isRequired,
-    color: PropTypes.string,
     handleMouseDown: PropTypes.func.isRequired,
     isBitBrushModeActive: PropTypes.bool.isRequired,
     onChangeFillColor: PropTypes.func.isRequired,
-    onUpdateImage: PropTypes.func.isRequired
+    onUpdateImage: PropTypes.func.isRequired,
+    stops: PropTypes.arrayOf(PropTypes.shape({
+        color: PropTypes.string,
+        offset: PropTypes.number
+    }))
 };
 
 const mapStateToProps = state => ({
     bitBrushSize: state.scratchPaint.bitBrushSize,
-    color: state.scratchPaint.color.fillColor.primary,
-    isBitBrushModeActive: state.scratchPaint.mode === Modes.BIT_BRUSH
+    isBitBrushModeActive: state.scratchPaint.mode === Modes.BIT_BRUSH,
+    stops: state.scratchPaint.color.fillColor.stops
 });
 const mapDispatchToProps = dispatch => ({
     clearSelectedItems: () => {
@@ -107,7 +111,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(changeMode(Modes.BIT_BRUSH));
     },
     onChangeFillColor: fillColor => {
-        dispatch(changeFillColor(fillColor));
+        dispatch(changeFillColor(fillColor, 0));
     }
 });
 

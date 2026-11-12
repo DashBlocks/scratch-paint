@@ -6,6 +6,7 @@ import bindAll from 'lodash.bindall';
 import Modes from '../lib/modes';
 import ColorStyleProptype from '../lib/color-style-proptype';
 import {MIXED} from '../helper/style-path';
+import {colorIsTransparent} from '../lib/tw-color-utils';
 
 import {changeFillColor, DEFAULT_COLOR} from '../reducers/fill-style';
 import {changeMode} from '../reducers/modes';
@@ -63,7 +64,8 @@ class BitRectMode extends React.Component {
     activateTool () {
         clearSelection(this.props.clearSelectedItems);
         // Force the default brush color if fill is MIXED or transparent
-        const fillColorPresent = this.props.color.primary !== MIXED && this.props.color.primary !== null;
+        const fillColorPresent = this.props.color.stops[0].color !== MIXED &&
+            !colorIsTransparent(this.props.color.stops[0].color);
         if (!fillColorPresent) {
             this.props.onChangeFillColor(DEFAULT_COLOR);
         }
@@ -130,7 +132,7 @@ const mapDispatchToProps = dispatch => ({
         dispatch(changeMode(Modes.BIT_RECT));
     },
     onChangeFillColor: fillColor => {
-        dispatch(changeFillColor(fillColor));
+        dispatch(changeFillColor(fillColor, 0));
     }
 });
 

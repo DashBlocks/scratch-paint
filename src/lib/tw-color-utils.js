@@ -71,7 +71,22 @@ const colorToHex = color => {
     return hex;
 };
 
+/**
+ * @param {string} color Color in any format.
+ * @returns {boolean} Returns true if color is transparent.
+ */
+const colorIsTransparent = colorString => {
+    if (colorString === null) return true;
+    if (colorString.startsWith('#') && colorString.length === 9) {
+        // parseColor does not properly parse alpha of hex colors
+        return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
+    } else {
+        return parseColor(colorString).hsva[3] === 0;
+    }
+};
+
 export {
     makeAlphaComponent,
-    colorToHex
+    colorToHex,
+    colorIsTransparent
 };

@@ -4,11 +4,10 @@ import React from 'react';
 import { connect } from 'react-redux';
 import bindAll from 'lodash.bindall';
 import Modes from '../lib/modes';
-import { MIXED } from '../helper/style-path';
 import ColorStyleProptype from '../lib/color-style-proptype';
-import GradientTypes from '../lib/gradient-types';
+import validateColorState from '../lib/validate-color-state.js';
 
-import { changeFillColor, clearFillGradient, DEFAULT_COLOR } from '../reducers/fill-style';
+import { changeFillColor, clearFillGradient } from '../reducers/fill-style';
 import { changeStrokeColor, clearStrokeGradient } from '../reducers/stroke-style';
 import { changeMode } from '../reducers/modes';
 import { clearSelectedItems, setSelectedItems } from '../reducers/selected-items';
@@ -24,8 +23,7 @@ class TriangleMode extends React.Component {
         super(props);
         bindAll(this, [
             'activateTool',
-            'deactivateTool',
-            'validateColorState'
+            'deactivateTool'
         ]);
     }
     componentDidMount() {
@@ -63,7 +61,7 @@ class TriangleMode extends React.Component {
     }
     activateTool() {
         clearSelection(this.props.clearSelectedItems);
-        this.validateColorState();
+        validateColorState(this.props);
 
         if (typeof this.props.sideCount !== "number") {
             this.props.onSetSideCount(3);
@@ -82,51 +80,6 @@ class TriangleMode extends React.Component {
         this.tool.setPointCount(this.props.pointCount);
         this.tool.setColorState(this.props.colorState);
         this.tool.activate();
-    }
-    validateColorState() { // TODO move to shared class
-        // Make sure that at least one of fill/stroke is set, and that MIXED is not one of the colors.
-        // If fill and stroke color are both missing, set fill to default and stroke to transparent.
-        // If exactly one of fill or stroke color is set, set the other one to transparent.
-        const { strokeWidth } = this.props.colorState;
-        const fillColor1 = this.props.colorState.fillColor.primary;
-        let fillColor2 = this.props.colorState.fillColor.secondary;
-        let fillGradient = this.props.colorState.fillColor.gradientType;
-        const strokeColor1 = this.props.colorState.strokeColor.primary;
-        let strokeColor2 = this.props.colorState.strokeColor.secondary;
-        let strokeGradient = this.props.colorState.strokeColor.gradientType;
-
-        if (fillColor2 === MIXED) {
-            this.props.clearFillGradient();
-            fillColor2 = null;
-            fillGradient = GradientTypes.SOLID;
-        }
-        if (strokeColor2 === MIXED) {
-            this.props.clearStrokeGradient();
-            strokeColor2 = null;
-            strokeGradient = GradientTypes.SOLID;
-        }
-
-        const fillColorMissing = fillColor1 === MIXED ||
-            (fillGradient === GradientTypes.SOLID && fillColor1 === null) ||
-            (fillGradient !== GradientTypes.SOLID && fillColor1 === null && fillColor2 === null);
-        const strokeColorMissing = strokeColor1 === MIXED ||
-            strokeWidth === null ||
-            strokeWidth === 0 ||
-            (strokeGradient === GradientTypes.SOLID && strokeColor1 === null) ||
-            (strokeGradient !== GradientTypes.SOLID && strokeColor1 === null && strokeColor2 === null);
-
-        if (fillColorMissing && strokeColorMissing) {
-            this.props.onChangeFillColor(DEFAULT_COLOR);
-            this.props.clearFillGradient();
-            this.props.onChangeStrokeColor(null);
-            this.props.clearStrokeGradient();
-        } else if (fillColorMissing && !strokeColorMissing) {
-            this.props.onChangeFillColor(null);
-            this.props.clearFillGradient();
-        } else if (!fillColorMissing && strokeColorMissing) {
-            this.props.onChangeStrokeColor(null);
-            this.props.clearStrokeGradient();
-        }
     }
     deactivateTool() {
         this.tool.deactivateTool();
@@ -193,10 +146,10 @@ const mapDispatchToProps = dispatch => ({
         dispatch(changeMode(Modes.TRIANGLE));
     },
     onChangeFillColor: fillColor => {
-        dispatch(changeFillColor(fillColor));
+        dispatch(changeFillColor(fillColor, 0));
     },
     onChangeStrokeColor: strokeColor => {
-        dispatch(changeStrokeColor(strokeColor));
+        dispatch(changeStrokeColor(strokeColor, 0));
     },
     onSetSideCount: sideCount => {
         dispatch(changeTrianglePolyCount(sideCount));

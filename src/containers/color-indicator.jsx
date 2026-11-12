@@ -8,6 +8,7 @@ import {injectIntl, intlShape} from 'react-intl';
 import {getSelectedLeafItems} from '../helper/selection';
 import Formats, {isBitmap} from '../lib/format';
 import GradientTypes from '../lib/gradient-types';
+import { colorIsTransparent } from '../lib/tw-color-utils';
 
 import ColorIndicatorComponent from '../components/color-indicator.jsx';
 import {addOtherStopInSelection,
@@ -20,16 +21,6 @@ import {addOtherStopInSelection,
     moveStopInSelection,
     removeStopInSelection,
     MIXED} from '../helper/style-path';
-
-const colorIsTransparent = colorString => {
-    if (colorString === null) return true;
-    if (colorString.startsWith('#') && colorString.length === 9) {
-        // parseColor does not properly parse alpha of hex colors
-        return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
-    } else {
-        return parseColor(colorString).hsva[3] === 0;
-    }
-};
 
 const makeColorIndicator = (label, isStroke) => {
     class ColorIndicator extends React.Component {

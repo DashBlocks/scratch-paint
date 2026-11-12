@@ -13,16 +13,7 @@ import {
 import GradientTypes from '../lib/gradient-types';
 import Modes from '../lib/modes';
 import Formats, {isBitmap} from '../lib/format';
-
-const colorIsTransparent = colorString => {
-    if (colorString === null) return true;
-    if (colorString.startsWith('#') && colorString.length === 9) {
-        // parseColor does not properly parse alpha of hex colors
-        return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
-    } else {
-        return parseColor(colorString).hsva[3] === 0;
-    }
-};
+import { colorIsTransparent } from '../lib/tw-color-utils';
 
 class StrokeWidthIndicator extends React.Component {
     constructor (props) {

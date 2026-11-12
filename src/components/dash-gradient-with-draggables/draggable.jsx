@@ -1,20 +1,10 @@
 import React from 'react';
 import classNames from 'classnames';
-import parseColor from 'parse-color';
 import PropTypes from 'prop-types';
 
 import noFillIcon from '../color-button/no-fill.svg';
 import styles from './draggable.css';
-
-const colorIsTransparent = colorString => {
-    if (colorString === null) return true;
-    if (colorString.startsWith('#') && colorString.length === 9) {
-        // parseColor does not properly parse alpha of hex colors
-        return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
-    } else {
-        return parseColor(colorString).hsva[3] === 0;
-    }
-};
+import { colorIsTransparent } from '../../lib/tw-color-utils';
 
 const Draggable = props => (
     <div
