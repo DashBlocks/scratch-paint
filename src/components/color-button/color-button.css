@@ -8,13 +8,14 @@
 
 .color-button-swatch {
     position: relative;
-    display: flex;
     cursor: pointer;
     flex-basis: 2rem;
     flex-shrink: 0;
     height: 100%;
     border: 1px solid $ui-pane-border;
     background-origin: border-box !important;
+    background-color: white;
+    overflow: hidden;
 }
 
 [dir="ltr"] .color-button-swatch {
@@ -57,7 +58,8 @@
 
 .swatch-icon {
     width: 1.75rem;
-    margin: auto;
+    margin: calc(0.125rem - 1px);
+    position: relative;
     /* Make sure it appears above the outline box */
     z-index: 2;
 }
@@ -65,8 +67,8 @@
 .outline-swatch:after {
     content: "";
     position: absolute;
-    top: calc(0.5rem);
-    left: calc(0.5rem);
+    top: 0.5rem;
+    left: 0.5rem;
     width: 0.75rem;
     height: 0.75rem;
     background: white;

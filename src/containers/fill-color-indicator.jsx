@@ -2,7 +2,11 @@ import {connect} from 'react-redux';
 import {defineMessages} from 'react-intl';
 
 import {changeColorIndex} from '../reducers/color-index';
-import {changeFillColor, changeFillColor2, changeFillGradientAngle} from '../reducers/fill-style';
+import {addOtherFillStop,
+    changeFillColor,
+    changeFillGradientAngle,
+    moveFillStop,
+    removeFillStop} from '../reducers/fill-style';
 import {changeGradientType} from '../reducers/fill-mode-gradient-type';
 import {openFillColor, closeFillColor} from '../reducers/modals';
 import {getSelectedLeafItems} from '../helper/selection';
@@ -25,8 +29,7 @@ const FillColorIndicator = makeColorIndicator(messages.label, false);
 const mapStateToProps = state => ({
     colorIndex: state.scratchPaint.fillMode.colorIndex,
     disabled: state.scratchPaint.mode === Modes.PEN || state.scratchPaint.mode === Modes.LINE,
-    color: state.scratchPaint.color.fillColor.primary,
-    color2: state.scratchPaint.color.fillColor.secondary,
+    stops: state.scratchPaint.color.fillColor.stops,
     colorModalVisible: state.scratchPaint.modals.fillColor,
     fillBitmapShapes: state.scratchPaint.fillBitmapShapes,
     format: state.scratchPaint.format,
@@ -39,15 +42,14 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
+    onAddOtherStop: (stopColor, index) => {
+        dispatch(addOtherFillStop(stopColor, index));
+    },
     onChangeColorIndex: index => {
         dispatch(changeColorIndex(index));
     },
     onChangeColor: (fillColor, index) => {
-        if (index === 0) {
-            dispatch(changeFillColor(fillColor));
-        } else if (index === 1) {
-            dispatch(changeFillColor2(fillColor));
-        }
+        dispatch(changeFillColor(fillColor, index));
     },
     onOpenColor: () => {
         dispatch(openFillColor());
@@ -60,6 +62,12 @@ const mapDispatchToProps = dispatch => ({
     },
     onChangeGradientAngle: gradientAngle => {
         dispatch(changeFillGradientAngle(gradientAngle));
+    },
+    onMoveStop: (offset, index) => {
+        dispatch(moveFillStop(offset, index));
+    },
+    onRemoveStop: (index) => {
+        dispatch(removeFillStop(index));
     },
     setSelectedItems: format => {
         dispatch(setSelectedItems(getSelectedLeafItems(), isBitmap(format)));

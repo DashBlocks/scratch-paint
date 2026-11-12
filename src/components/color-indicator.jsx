@@ -17,14 +17,16 @@ const ColorIndicatorComponent = props => (
         <Popover
             body={
                 <ColorPicker
-                    color={props.color}
-                    color2={props.color2}
+                    stops={props.stops}
                     gradientType={props.gradientType}
                     gradientAngle={props.gradientAngle}
                     shouldShowGradientTools={props.shouldShowGradientTools}
+                    onAddOtherStop={props.onAddOtherStop}
                     onChangeColor={props.onChangeColor}
                     onChangeGradientType={props.onChangeGradientType}
                     onChangeGradientAngle={props.onChangeGradientAngle}
+                    onMoveStop={props.onMoveStop}
+                    onRemoveStop={props.onRemoveStop}
                     onSwap={props.onSwap}
                 />
             }
@@ -34,8 +36,7 @@ const ColorIndicatorComponent = props => (
         >
             <Label text={props.label}>
                 <ColorButton
-                    color={props.color}
-                    color2={props.color2}
+                    stops={props.stops}
                     gradientType={props.gradientType}
                     gradientAngle={props.gradientAngle}
                     onClick={props.onOpenColor}
@@ -49,20 +50,25 @@ const ColorIndicatorComponent = props => (
 ColorIndicatorComponent.propTypes = {
     className: PropTypes.string,
     disabled: PropTypes.bool.isRequired,
-    color: PropTypes.string,
-    color2: PropTypes.string,
     colorModalVisible: PropTypes.bool.isRequired,
     gradientType: PropTypes.oneOf(Object.keys(GradientTypes)).isRequired,
     gradientAngle: PropTypes.number,
     label: PropTypes.string.isRequired,
+    onAddOtherStop: PropTypes.func.isRequired,
     onChangeColor: PropTypes.func.isRequired,
     onChangeGradientType: PropTypes.func.isRequired,
     onChangeGradientAngle: PropTypes.func.isRequired,
     onCloseColor: PropTypes.func.isRequired,
     onOpenColor: PropTypes.func.isRequired,
+    onMoveStop: PropTypes.func.isRequired,
+    onRemoveStop: PropTypes.func.isRequired,
     onSwap: PropTypes.func.isRequired,
     outline: PropTypes.bool.isRequired,
-    shouldShowGradientTools: PropTypes.bool.isRequired
+    shouldShowGradientTools: PropTypes.bool.isRequired,
+    stops: PropTypes.arrayOf(PropTypes.shape({
+        color: PropTypes.string,
+        offset: PropTypes.number
+    }))
 };
 
 export default ColorIndicatorComponent;

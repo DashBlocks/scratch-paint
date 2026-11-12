@@ -2,7 +2,12 @@ import {connect} from 'react-redux';
 import {defineMessages} from 'react-intl';
 
 import {changeColorIndex} from '../reducers/color-index';
-import {changeStrokeColor, changeStrokeColor2, changeStrokeGradientType, changeStrokeGradientAngle} from '../reducers/stroke-style';
+import {addOtherStrokeStop,
+    changeStrokeColor,
+    changeStrokeGradientType,
+    changeStrokeGradientAngle,
+    moveStrokeStop,
+    removeStrokeStop} from '../reducers/stroke-style';
 import {changeStrokeWidth} from '../reducers/stroke-width';
 import {openStrokeColor, closeStrokeColor} from '../reducers/modals';
 import {getSelectedLeafItems} from '../helper/selection';
@@ -27,8 +32,7 @@ const mapStateToProps = state => ({
     disabled: state.scratchPaint.mode === Modes.BRUSH ||
         state.scratchPaint.mode === Modes.TEXT ||
         state.scratchPaint.mode === Modes.FILL,
-    color: state.scratchPaint.color.strokeColor.primary,
-    color2: state.scratchPaint.color.strokeColor.secondary,
+    stops: state.scratchPaint.color.strokeColor.stops,
     fillBitmapShapes: state.scratchPaint.fillBitmapShapes,
     colorModalVisible: state.scratchPaint.modals.strokeColor,
     format: state.scratchPaint.format,
@@ -41,15 +45,14 @@ const mapStateToProps = state => ({
 });
 
 const mapDispatchToProps = dispatch => ({
+    onAddOtherStop: (stopColor, index) => {
+        dispatch(addOtherStrokeStop(stopColor, index));
+    },
     onChangeColorIndex: index => {
         dispatch(changeColorIndex(index));
     },
     onChangeColor: (strokeColor, index) => {
-        if (index === 0) {
-            dispatch(changeStrokeColor(strokeColor));
-        } else if (index === 1) {
-            dispatch(changeStrokeColor2(strokeColor));
-        }
+        dispatch(changeStrokeColor(strokeColor, index));
     },
     onChangeStrokeWidth: strokeWidth => {
         dispatch(changeStrokeWidth(strokeWidth));
@@ -64,7 +67,13 @@ const mapDispatchToProps = dispatch => ({
         dispatch(changeStrokeGradientType(gradientType));
     },
     onChangeGradientAngle: gradientAngle => {
-        dispatch(changeStrokeGradientType(gradientAngle));
+        dispatch(changeStrokeGradientAngle(gradientAngle));
+    },
+    onMoveStop: (offset, index) => {
+        dispatch(moveStrokeStop(offset, index));
+    },
+    onRemoveStop: (index) => {
+        dispatch(removeStrokeStop(index));
     },
     setSelectedItems: format => {
         dispatch(setSelectedItems(getSelectedLeafItems(), isBitmap(format)));
