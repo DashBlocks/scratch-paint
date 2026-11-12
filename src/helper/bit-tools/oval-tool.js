@@ -1,5 +1,6 @@
 import paper from '@turbowarp/paper';
 import Modes from '../../lib/modes';
+import GradientTypes from '../../lib/gradient-types';
 import {styleShape} from '../style-path';
 import {commitOvalToBitmap} from '../bitmap';
 import {getRaster} from '../layer';
@@ -7,6 +8,8 @@ import {clearSelection} from '../selection';
 import {getSquareDimensions} from '../math';
 import BoundingBoxTool from '../selection-tools/bounding-box-tool';
 import NudgeTool from '../selection-tools/nudge-tool';
+
+const TRANSPARENT = 'rgba(0,0,0,0)';
 
 /**
  * Tool for drawing ovals.
@@ -86,8 +89,24 @@ class OvalTool extends paper.Tool {
     }
     styleOval () {
         styleShape(this.oval, {
-            fillColor: this.filled ? this.color : null,
-            strokeColor: this.filled ? null : this.color,
+            fillColor: this.filled ?
+                this.color :
+                {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                },
+            strokeColor: this.filled ?
+                {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                } :
+                this.color,
             strokeWidth: this.filled ? 0 : this.thickness
         });
     }

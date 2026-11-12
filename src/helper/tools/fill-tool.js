@@ -26,8 +26,7 @@ class FillTool extends paper.Tool {
         this.onMouseUp = this.handleMouseUp;
 
         // Color to fill with
-        this.fillColor = null;
-        this.fillColor2 = null;
+        this.stops = [];
         this.gradientType = null;
         this.gradientAngle = 90;
 
@@ -74,11 +73,8 @@ class FillTool extends paper.Tool {
             tolerance: FillTool.TOLERANCE / paper.view.zoom
         };
     }
-    setFillColor (fillColor) {
-        this.fillColor = fillColor;
-    }
-    setFillColor2 (fillColor2) {
-        this.fillColor2 = fillColor2;
+    setStops (stops) {
+        this.stops = stops;
     }
     setGradientType (gradientType) {
         this.gradientType = gradientType;
@@ -114,7 +110,7 @@ class FillTool extends paper.Tool {
         if (!hitTargetChanged) {
             // Only radial gradient needs to be updated
             if (this.gradientType === GradientTypes.RADIAL) {
-                this._setFillItemColor(this.fillColor, this.fillColor2, this.gradientType, 90, event.point);
+                this._setFillItemColorFromStops(this.stops, this.gradientType, 90, event.point);
             }
             return;
         }
@@ -154,7 +150,7 @@ class FillTool extends paper.Tool {
             } else if (this.fillItem.parent instanceof paper.CompoundPath) {
                 this.fillItemOrigColor = hitItem.parent[colorProp];
             }
-            this._setFillItemColor(this.fillColor, this.fillColor2, this.gradientType, this.gradientAngle, event.point);
+            this._setFillItemColorFromStops(this.stops, this.gradientType, this.gradientAngle, event.point);
         }
     }
     handleMouseDown (event) {
@@ -179,11 +175,11 @@ class FillTool extends paper.Tool {
                 let parent = this.fillItem.parent;
                 this.fillItem.remove();
                 parent = parent.reduce();
-                parent.fillColor = this.fillColor;
+                parent.fillColor = this.stops[0].color;
             } else if (this.addedFillItem) {
                 // Fill in a hole.
                 this.addedFillItem.data.noHover = false;
-            } else if (!this.fillColor &&
+            } else if (!this.stops[0] &&
                     this.fillItem.data &&
                     this.fillItem.data.origItem) {
                 // Filling a hole filler with transparent returns it to being gone
@@ -208,9 +204,7 @@ class FillTool extends paper.Tool {
                 item.strokeColor.alpha === 0 ||
                 item.strokeWidth === 0;
     }
-    // Either pass in a fully defined paper.Color as color1,
-    // or pass in 2 color strings, a gradient type, and a pointer location
-    _setFillItemColor (color1, color2, gradientType, gradientAngle, pointerLocation) {
+    _setFillItemColorFromStops (stops, gradientType, gradientAngle, pointerLocation) {
         const item = this._getFillItem();
         if (!item) return;
         const colorProp = this.fillProperty === 'fill' ? 'fillColor' : 'strokeColor';
@@ -218,8 +212,7 @@ class FillTool extends paper.Tool {
         // This ensures we do not set a gradient by accident (see scratch-paint#830).
         if (gradientType && gradientType !== GradientTypes.SOLID) {
             item[colorProp] = createGradientObject(
-                color1,
-                color2,
+                stops,
                 gradientType,
                 gradientAngle,
                 item.bounds,
@@ -227,8 +220,14 @@ class FillTool extends paper.Tool {
                 item.strokeWidth
             );
         } else {
-            item[colorProp] = color1;
+            item[colorProp] = stops[0].color;
         }
+    }
+    _setFillItemColor (color) {
+        const item = this._getFillItem();
+        if (!item) return;
+        const colorProp = this.fillProperty === 'fill' ? 'fillColor' : 'strokeColor';
+        item[colorProp] = color;
     }
     _getFillItem () {
         if (this.addedFillItem) {

@@ -4,7 +4,6 @@ import {createGradientObject} from '../style-path';
 import {createCanvas, getRaster} from '../layer';
 import GradientTypes from '../../lib/gradient-types';
 
-const TRANSPARENT = 'rgba(0,0,0,0)';
 /**
  * Tool for drawing fills.
  */
@@ -21,17 +20,13 @@ class FillTool extends paper.Tool {
         this.onMouseDown = this.handleMouseDown;
         this.onMouseDrag = this.handleMouseDrag;
 
-        this.color = null;
-        this.color2 = null;
+        this.stops = [];
         this.gradientType = null;
         this.gradientAngle = 90;
         this.active = false;
     }
-    setColor (color) {
-        this.color = color;
-    }
-    setColor2 (color2) {
-        this.color2 = color2;
+    setStops (stops) {
+        this.stops = stops;
     }
     setGradientType (gradientType) {
         this.gradientType = gradientType;
@@ -48,15 +43,12 @@ class FillTool extends paper.Tool {
     paint (event) {
         const sourceContext = getRaster().getContext('2d');
         let destContext = sourceContext;
-        let color = this.color;
+        let color = this.stops[0].color;
         // Paint to a mask instead of the original canvas when drawing
         if (this.gradientType !== GradientTypes.SOLID) {
             const tmpCanvas = createCanvas();
             destContext = tmpCanvas.getContext('2d');
             color = 'black';
-        } else if (!color) {
-            // Null color means transparent because that is the standard in vector
-            color = TRANSPARENT;
         }
         let changed = false;
         if (event.event.shiftKey) {
@@ -85,8 +77,7 @@ class FillTool extends paper.Tool {
                     }
                 });
                 gradient.fillColor = createGradientObject(
-                    this.color,
-                    this.color2,
+                    this.stops,
                     this.gradientType,
                     this.gradientAngle,
                     gradient.bounds,

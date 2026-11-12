@@ -15,6 +15,10 @@ const isValidHexColor = color => {
 };
 
 const makeColorStyleReducer = ({
+    // Action name for adding the gradient stop
+    addOtherStopAction,
+    // Action name for changing the color
+    changeColorAction,
     // Action name for changing the primary color
     changePrimaryColorAction,
     // Action name for changing the secondary color
@@ -27,12 +31,13 @@ const makeColorStyleReducer = ({
     clearGradientAction,
     // Initial color when not set
     defaultColor,
-    // The name of the property read from getColorsFromSelection to get the primary color.
+    // Action name for moving the gradient stop
+    moveStopAction,
+    // Action name for removing the gradient stop
+    removeStopAction,
+    // The name of the property read from getColorsFromSelection to get the color.
     // e.g. `fillColor` or `strokeColor`.
-    selectionPrimaryColorKey,
-    // The name of the property read from getColorsFromSelection to get the secondary color.
-    // e.g. `fillColor2` or `strokeColor2`.
-    selectionSecondaryColorKey,
+    selectionColorKey,
     // The name of the property read from getColorsFromSelection to get the gradient type.
     // e.g. `fillGradientType` or `strokeGradientType`.
     selectionGradientTypeKey,
@@ -42,19 +47,54 @@ const makeColorStyleReducer = ({
 }) => function colorReducer (state, action) {
     if (typeof state === 'undefined') {
         state = {
-            primary: defaultColor,
-            secondary: null,
+            stops: [{
+                color: defaultColor,
+                offset: 0
+            }],
             gradientType: GradientTypes.SOLID,
             gradientAngle: 0
         };
     }
     switch (action.type) {
-    case changePrimaryColorAction:
+    case addOtherStopAction: {
+        if (action.index < 0 || action.index >= state.stops.length) {
+            log.warn(`Stop with index ${action.index} does not exist`);
+            return state;
+        }
         if (!isValidHexColor(action.color)) return state;
-        return {...state, primary: action.color};
-    case changeSecondaryColorAction:
+
+        if (state.stops.length < 2) {
+            return {
+                ...state,
+                stops: state.stops.concat({
+                    color: action.color,
+                    offset: 1
+                })
+            };
+        }
+
+        const insertIdx = action.index < state.stops.length - 1 ? action.index + 1 : action.index;
+        return {
+            ...state,
+            stops: state.stops.toSpliced(insertIdx, 0, {
+                color: action.color,
+                offset: (state.stops[insertIdx - 1].offset + state.stops[insertIdx].offset) / 2
+            })
+        };
+    }
+    case changeColorAction:
+        if (action.index < 0 || action.index >= state.stops.length) {
+            log.warn(`Stop with index ${action.index} does not exist`);
+            return state;
+        }
         if (!isValidHexColor(action.color)) return state;
-        return {...state, secondary: action.color};
+        return {
+            ...state,
+            stops: state.stops.toSpliced(action.index, 1, {
+                color: action.color,
+                offset: state.stops[action.index].offset
+            })
+        };
     case CHANGE_SELECTED_ITEMS: {
         // Don't change state if no selection
         if (!action.selectedItems || !action.selectedItems.length) {
@@ -67,21 +107,18 @@ const makeColorStyleReducer = ({
         // preserve stroke swatch state across bitmap mode-- if getColorsFromSelection set them to null, then selecting
         // anything in bitmap mode would overwrite the stroke state.
         const newState = {...state};
-        if (selectionPrimaryColorKey in colors) {
-            newState.primary = colors[selectionPrimaryColorKey];
+        if (selectionColorKey in colors) {
+            if (Array.isArray(colors[selectionColorKey])) {
+                newState.stops = colors[selectionColorKey];
+            } else {
+                newState.stops = [{
+                    color: colors[selectionColorKey],
+                    offset: 0
+                }];
+            }
         }
         if (selectionGradientTypeKey in colors) {
             newState.gradientType = colors[selectionGradientTypeKey];
-        }
-
-        // Gradient type may be solid when multiple gradient types are selected.
-        // In this case, changing the first color should not change the second color.
-        if (
-            selectionSecondaryColorKey in colors &&
-            (colors[selectionGradientTypeKey] !== GradientTypes.SOLID ||
-            colors[selectionSecondaryColorKey] === MIXED)
-        ) {
-            newState.secondary = colors[selectionSecondaryColorKey];
         }
 
         if (
@@ -95,6 +132,17 @@ const makeColorStyleReducer = ({
     }
     case changeGradientTypeAction:
         if (action.gradientType in GradientTypes) {
+            if (state.gradientType !== GradientTypes.SOLID && action.gradientType === GradientTypes.SOLID) {
+                return {
+                    ...state,
+                    stops: [{
+                        color: state.stops[0].color,
+                        offset: 0
+                    }],
+                    gradientType: action.gradientType,
+                    gradientAngle: 0
+                };
+            }
             return {...state, gradientType: action.gradientType, gradientAngle: action.gradientType === GradientTypes.LINEAR ? state.gradientAngle : 0};
         }
         log.warn(`Gradient type does not exist: ${action.gradientType}`);
@@ -105,7 +153,46 @@ const makeColorStyleReducer = ({
         }
         return {...state, gradientAngle: action.gradientAngle};
     case clearGradientAction:
-        return {...state, secondary: null, gradientAngle: 0, gradientType: GradientTypes.SOLID};
+        return {
+            ...state,
+            stops: [{
+                color: state.stops[0].color,
+                offset: 0
+            }],
+            gradientType: GradientTypes.SOLID,
+            gradientAngle: 0
+        };
+    case moveStopAction: {
+        if (action.index < 0 || action.index >= state.stops.length) {
+            log.warn(`Stop with index ${action.index} does not exist`);
+            return state;
+        }
+        if (state.stops.length < 2) {
+            log.warn(`Solid color can not be moved`);
+            return state;
+        }
+        return {
+            ...state,
+            stops: state.stops.toSpliced(action.index, 1, {
+                color: state.stops[action.index].color,
+                offset: action.offset
+            })
+        };
+    }
+    case removeStopAction: {
+        if (action.index < 0 || action.index >= state.stops.length) {
+            log.warn(`Stop with index ${action.index} does not exist`);
+            return state;
+        }
+        if (state.stops.length <= 2) {
+            log.warn(`Two or less stops; can not remove stop`);
+            return state;
+        }
+        return {
+            ...state,
+            stops: state.stops.toSpliced(action.index, 1)
+        };
+    }
     default:
         return state;
     }

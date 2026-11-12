@@ -3,6 +3,8 @@ import {styleShape} from '../style-path';
 import {endPointHit, touching} from '../snapping';
 import {drawHitPoint, removeHitPoint} from '../guides';
 
+const TRANSPARENT = 'rgba(0,0,0,0)';
+
 /**
  * Tool to handle freehand drawing of lines.
  */
@@ -66,7 +68,13 @@ class PenTool extends paper.Tool {
         if (this.hitResult) {
             this.path = this.hitResult.path;
             styleShape(this.path, {
-                fillColor: null,
+                fillColor: {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                },
                 strokeColor: this.colorState.strokeColor,
                 strokeWidth: this.colorState.strokeWidth
             });
@@ -82,7 +90,13 @@ class PenTool extends paper.Tool {
         if (!this.path) {
             this.path = new paper.Path();
             styleShape(this.path, {
-                fillColor: null,
+                fillColor: {
+                    stops: [{
+                        color: TRANSPARENT,
+                        offset: 0
+                    }],
+                    gradientType: GradientTypes.SOLID
+                },
                 strokeColor: this.colorState.strokeColor,
                 strokeWidth: this.colorState.strokeWidth
             });

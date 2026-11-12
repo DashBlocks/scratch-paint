@@ -1,37 +1,42 @@
 import makeColorStyleReducer from '../lib/make-color-style-reducer';
 
+const ADD_OTHER_FILL_STOP = 'scratch-paint/fill-style/ADD_OTHER_FILL_STOP';
 const CHANGE_FILL_COLOR = 'scratch-paint/fill-style/CHANGE_FILL_COLOR';
-const CHANGE_FILL_COLOR_2 = 'scratch-paint/fill-style/CHANGE_FILL_COLOR_2';
 const CHANGE_FILL_GRADIENT_TYPE = 'scratch-paint/fill-style/CHANGE_FILL_GRADIENT_TYPE';
 const CHANGE_FILL_GRADIENT_ANGLE = 'scratch-paint/fill-style/CHANGE_FILL_GRADIENT_ANGLE';
 const CLEAR_FILL_GRADIENT = 'scratch-paint/fill-style/CLEAR_FILL_GRADIENT';
 const DEFAULT_COLOR = '#9966FF';
+const MOVE_FILL_STOP = 'scratch-paint/fill-style/MOVE_FILL_STOP';
+const REMOVE_FILL_STOP = 'scratch-paint/fill-style/REMOVE_FILL_STOP';
 
 const reducer = makeColorStyleReducer({
-    changePrimaryColorAction: CHANGE_FILL_COLOR,
-    changeSecondaryColorAction: CHANGE_FILL_COLOR_2,
+    addOtherStopAction: ADD_OTHER_FILL_STOP,
+    changeColorAction: CHANGE_FILL_COLOR,
     changeGradientTypeAction: CHANGE_FILL_GRADIENT_TYPE,
     changeGradientAngleAction: CHANGE_FILL_GRADIENT_ANGLE,
     clearGradientAction: CLEAR_FILL_GRADIENT,
     defaultColor: DEFAULT_COLOR,
-    selectionPrimaryColorKey: 'fillColor',
-    selectionSecondaryColorKey: 'fillColor2',
+    moveStopAction: MOVE_FILL_STOP,
+    removeStopAction: REMOVE_FILL_STOP,
+    selectionColorKey: 'fillColor',
     selectionGradientTypeKey: 'fillGradientType',
     selectionGradientAngleKey: 'fillGradientAngle'
 });
 
 // Action creators ==================================
-const changeFillColor = function (fillColor) {
+const addOtherFillStop = function (stopColor, index) {
     return {
-        type: CHANGE_FILL_COLOR,
-        color: fillColor
+        type: ADD_OTHER_FILL_STOP,
+        color: stopColor,
+        index
     };
 };
 
-const changeFillColor2 = function (fillColor) {
+const changeFillColor = function (fillColor, index) {
     return {
-        type: CHANGE_FILL_COLOR_2,
-        color: fillColor
+        type: CHANGE_FILL_COLOR,
+        color: fillColor,
+        index
     };
 };
 
@@ -55,13 +60,30 @@ const clearFillGradient = function () {
     };
 };
 
+const moveFillStop = function (offset, index) {
+    return {
+        type: MOVE_FILL_STOP,
+        offset,
+        index
+    };
+};
+
+const removeFillStop = function (index) {
+    return {
+        type: REMOVE_FILL_STOP,
+        index
+    };
+};
+
 export {
     reducer as default,
+    addOtherFillStop,
     changeFillColor,
-    changeFillColor2,
     changeFillGradientType,
     changeFillGradientAngle,
     clearFillGradient,
+    moveFillStop,
+    removeFillStop,
     DEFAULT_COLOR,
     CHANGE_FILL_GRADIENT_TYPE
 };
