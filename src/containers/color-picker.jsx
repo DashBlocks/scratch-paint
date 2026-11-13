@@ -13,7 +13,7 @@ import GradientTypes from '../lib/gradient-types';
 import ColorPickerComponent from '../components/color-picker/color-picker.jsx';
 import {MIXED} from '../helper/style-path';
 import Modes from '../lib/modes';
-import {colorToHex, makeAlphaComponent} from '../lib/tw-color-utils';
+import {colorToHex, makeAlphaComponent, colorIsTransparent} from '../lib/tw-color-utils';
 
 const colorStringToHsv = hexString => {
     let hsv;
@@ -87,10 +87,10 @@ class ColorPicker extends React.Component {
         }
     }
     getHsv (color) {
-        const isTransparent = color === null;
+        const isTransparent = colorIsTransparent(color);
         const isMixed = color === MIXED;
         return isTransparent || isMixed ?
-            [50, 100, 100, isTransparent ? 0 : 1] : colorStringToHsv(color);
+            [0, 0, 0, isTransparent ? 0 : 1] : colorStringToHsv(color);
     }
     ensureNonZeroAlpha () {
         if (this.state.alpha === 0) {
