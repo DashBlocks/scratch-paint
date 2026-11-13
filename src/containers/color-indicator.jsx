@@ -2,7 +2,6 @@ import PropTypes from 'prop-types';
 import React from 'react';
 import parseColor from 'parse-color';
 import bindAll from 'lodash.bindall';
-import parseColor from 'parse-color';
 import {injectIntl, intlShape} from 'react-intl';
 
 import {getSelectedLeafItems} from '../helper/selection';
