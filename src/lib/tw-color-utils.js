@@ -81,7 +81,7 @@ const colorIsTransparent = colorString => {
         // parseColor does not properly parse alpha of hex colors
         return parseInt(colorString.substr(colorString.length - 2), 16) === 0;
     } else {
-        return parseColor(colorString).hsva[3] === 0;
+        return parseColorLib(colorString).hsva[3] === 0;
     }
 };
 
