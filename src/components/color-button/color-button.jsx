@@ -16,21 +16,21 @@ const stopsToFill = (stops, gradientType, gradientAngle) => {
     case GradientTypes.SOLID:
         return stops[0].color;
     case GradientTypes.LINEAR:
-        return `url(
-            "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'>
-                <linearGradient id='gradient' gradientTransform='rotate(${gradientAngle})'>
-                    ${stops.map(stop => `<stop offset=${stop.offset} stopColor=${stop.color} />`)}
-                </linearGradient>
-            </svg>#gradient"
-        )`;
+        return `url(` +
+            `"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'>` +
+                `<linearGradient id='gradient' gradientTransform='rotate(${gradientAngle})'>` +
+                    stops.map(stop => `<stop offset='${stop.offset}' stop-color='${stop.color}' />`).join('') +
+                `</linearGradient>` +
+            `</svg>#gradient"` +
+        `)`;
     case GradientTypes.RADIAL:
-        return `url(
-            "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'>
-                <radialGradient id='gradient'>
-                    ${stops.map(stop => `<stop offset=${stop.offset} stopColor=${stop.color} />`)}
-                </radialGradient>
-            </svg>#gradient"
-        )`;
+        return `url(` +
+            `"data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg'>` +
+                `<radialGradient id='gradient' gradientTransform='rotate(${gradientAngle})'>` +
+                    stops.map(stop => `<stop offset='${stop.offset}' stop-color='${stop.color}' />`).join('') +
+                `</radialGradient>` +
+            `</svg>#gradient"` +
+        `)`;
     default:
         log.error(`Unrecognized gradient type: ${gradientType}`);
         return null;
